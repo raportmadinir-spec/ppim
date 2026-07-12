@@ -1,0 +1,296 @@
+<!-- FILE: setting.html -->
+<style>
+  .card-glass-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); backdrop-filter: blur(10px); }
+  .form-control-glass { background: rgba(255,255,255,0.9) !important; border: 1px solid rgba(0,0,0,0.1) !important; border-radius: 8px; color: #333; font-weight: 500; transition: all 0.3s; }
+  .form-control-glass:focus { border-color: #0ea5e9 !important; box-shadow: 0 0 0 0.25rem rgba(14, 165, 233, 0.25) !important; background: #fff !important; }
+  .form-label-glass { color: rgba(255,255,255,0.9); font-weight: 600; font-size: 0.85rem; letter-spacing: 0.5px; margin-bottom: 0.3rem; }
+  .section-title { color: #0ea5e9; font-weight: 700; border-bottom: 2px solid rgba(14, 165, 233, 0.3); padding-bottom: 8px; margin-bottom: 20px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+  .logo-preview-img { width: 120px; height: 120px; object-fit: contain; border-radius: 15px; background: white; padding: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: 3px solid rgba(255,255,255,0.5); }
+  .info-box { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; border: 1px solid rgba(255,255,255,0.1); height: 100%; }
+  .info-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #0ea5e9; font-weight: 700; margin-bottom: 5px; }
+  .info-value { font-size: 1.05rem; color: white; font-weight: 600; }
+</style>
+
+<div class="row mb-3">
+  <div class="col-12 text-center text-md-start">
+    <h4 class="text-glass fw-bold mb-1">Profil Lembaga</h4>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.85rem;">Identitas ini akan dicetak pada bagian kop raport santri.</p>
+  </div>
+</div>
+
+<div class="row justify-content-center mb-5">
+  <div class="col-lg-10">
+    <div class="card card-glass-form p-4 p-md-5">
+
+      <!-- ============================================== -->
+      <!-- MODE 1: TAMPILAN PREVIEW (VIEW MODE)           -->
+      <!-- ============================================== -->
+      <div id="view-mode">
+        <div class="text-center mb-4">
+          <img id="view_logo" src="https://via.placeholder.com/120?text=LOGO" alt="Logo Madrasah" class="logo-preview-img mb-3">
+          <h2 class="text-white fw-bold text-uppercase mb-1" id="view_nama">NAMA MADRASAH</h2>
+          <div class="d-flex justify-content-center gap-2 mt-2">
+            <span class="badge bg-primary px-3 py-2">NSM: <span id="view_nsm">-</span></span>
+            <span class="badge bg-info text-dark px-3 py-2">NPSN: <span id="view_npsn">-</span></span>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-4">
+          <div class="col-md-12">
+            <div class="info-box text-center">
+              <div class="info-label"><i class="fa-solid fa-map-location-dot me-1"></i> Alamat Lengkap</div>
+              <div class="info-value" id="view_alamat">-</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-box">
+              <div class="info-label"><i class="fa-solid fa-user-tie me-1"></i> Kepala Madrasah</div>
+              <div class="info-value" id="view_kepala">-</div>
+              <div class="text-white-50 mt-1" style="font-size:0.85rem">NIP: <span id="view_nip">-</span></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-box">
+              <div class="info-label"><i class="fa-solid fa-calendar-check me-1"></i> Tgl. Cetak Raport</div>
+              <div class="info-value text-warning" id="view_tgl">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-end mt-5 border-top border-secondary border-opacity-25 pt-4">
+          <!-- JURUS INLINE DOM MANIPULATION -->
+          <button type="button" class="btn btn-warning fw-bold shadow px-5 py-2" onclick="document.getElementById('view-mode').classList.add('d-none'); document.getElementById('edit-mode').classList.remove('d-none');" style="border-radius: 12px; letter-spacing: 1px;">
+            <i class="fa-solid fa-pen-to-square me-2"></i> EDIT PENGATURAN
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- MODE 2: FORM INPUT/EDIT (EDIT MODE)            -->
+      <!-- ============================================== -->
+      <div id="edit-mode" class="d-none">
+        <form onsubmit="event.preventDefault(); window.simpanSettingData();">
+          <input type="hidden" id="id_setting">
+          <input type="hidden" id="old_logo_base64">
+
+          <h5 class="section-title mt-2"><i class="fa-solid fa-building-columns me-2"></i> Identitas Madrasah / Pondok</h5>
+          <div class="row mb-3">
+            <div class="col-md-12 mb-3">
+              <label class="form-label-glass">Nama Lengkap Madrasah / Pondok Pesantren</label>
+              <input type="text" class="form-control form-control-glass px-3 py-2 text-uppercase" id="nama_madrasah" required placeholder="Contoh: PONDOK PESANTREN AL-HIDAYAH">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">NSM (Nomor Statistik Madrasah)</label>
+              <input type="text" class="form-control form-control-glass px-3 py-2" id="nsm" placeholder="Kosongkan jika tidak ada">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">NPSN (Nomor Pokok Sekolah Nasional)</label>
+              <input type="text" class="form-control form-control-glass px-3 py-2" id="npsn" placeholder="Kosongkan jika tidak ada">
+            </div>
+          </div>
+
+          <h5 class="section-title mt-4"><i class="fa-solid fa-map-location-dot me-2"></i> Lokasi & Alamat Lengkap</h5>
+          <div class="row mb-3">
+            <div class="col-12 mb-3">
+              <label class="form-label-glass">Alamat Jalan / Desa</label>
+              <textarea class="form-control form-control-glass px-3 py-2" id="alamat" rows="2" required placeholder="Contoh: Jl. Merdeka No. 12, Desa Maju Jaya"></textarea>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">Kabupaten / Kota</label>
+              <input type="text" class="form-control form-control-glass px-3 py-2" id="kabupaten" required placeholder="Contoh: Kab. Malang">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">Provinsi</label>
+              <input type="text" class="form-control form-control-glass px-3 py-2" id="provinsi" required placeholder="Contoh: Jawa Timur">
+            </div>
+          </div>
+
+          <h5 class="section-title mt-4"><i class="fa-solid fa-image me-2"></i> Logo & Atribut Penandatangan</h5>
+          <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">Upload Logo (PNG/JPG)</label>
+              <input type="file" class="form-control form-control-glass px-3 py-2" id="logo_upload" accept="image/png, image/jpeg" onchange="window.handleUploadLogo(this)">
+              <small class="text-white-50 mt-1 d-block" style="font-size: 0.75rem;">Maksimal 5MB. Biarkan kosong jika tidak ingin mengubah logo.</small>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">Tanggal Default Cetak Raport</label>
+              <input type="date" class="form-control form-control-glass px-3 py-2" id="tgl_cetak_raport">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">Nama Kepala Madrasah / Pimpinan Pondok</label>
+              <input type="text" class="form-control form-control-glass px-3 py-2" id="kepala_madrasah" required placeholder="Gelar & Nama Lengkap">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label-glass">NIP Kepala (Opsional)</label>
+              <input type="text" class="form-control form-control-glass px-3 py-2" id="nip_kepala" placeholder="Isi tanda strip (-) jika non-PNS">
+            </div>
+          </div>
+
+          <hr class="border-secondary opacity-25 mb-4">
+          
+          <div class="d-flex justify-content-end gap-3">
+            <!-- JURUS INLINE DOM MANIPULATION -->
+            <button type="button" class="btn btn-light fw-bold px-4 py-2" onclick="document.getElementById('edit-mode').classList.add('d-none'); document.getElementById('view-mode').classList.remove('d-none'); document.getElementById('logo_upload').value=''; window.tempImageData=null;" style="border-radius: 10px;">Batal</button>
+            <button type="submit" class="btn btn-primary fw-bold shadow-lg px-5 py-2" id="btnSimpanSetting" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; border-radius: 10px; letter-spacing: 1px;">
+              SIMPAN PENGATURAN
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+window.tempImageData = null;
+
+// FUNGSI UPLOAD DENGAN AUTO-COMPRESSOR 5MB MENGGUNAKAN CANVAS
+window.handleUploadLogo = function(inputElem) {
+  var file = inputElem.files[0];
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) { 
+      Swal.fire('Terlalu Besar', 'Ukuran foto maksimal 5MB!', 'warning');
+      inputElem.value = '';
+      return;
+    }
+    
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var MAX_WIDTH = 300; 
+        var MAX_HEIGHT = 300;
+        var width = img.width;
+        var height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round(height *= MAX_WIDTH / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round(width *= MAX_HEIGHT / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Compress ke JPEG kualitas 80% agar ringan di Spreadsheet
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        window.tempImageData = {
+          base64: dataUrl.split(',')[1],
+          name: file.name,
+          mimeType: 'image/jpeg'
+        };
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+window.formatTglID = function(tanggalString) {
+  if(!tanggalString) return '-';
+  var options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(tanggalString).toLocaleDateString('id-ID', options);
+};
+
+window.fetchSetting = function() {
+  Swal.fire({ title: 'Memuat Profil...', background: 'rgba(15, 23, 42, 0.95)', color: '#fff', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+  google.script.run
+    .withSuccessHandler(function(res) {
+      Swal.close();
+      if(res.status === 'success' && res.data && res.data.nama_madrasah) {
+        var data = res.data;
+        document.getElementById('id_setting').value = data.id_setting || '';
+        document.getElementById('old_logo_base64').value = data.logo_url_drive || '';
+        document.getElementById('nama_madrasah').value = data.nama_madrasah || '';
+        document.getElementById('nsm').value = data.nsm || '';
+        document.getElementById('npsn').value = data.npsn || '';
+        document.getElementById('alamat').value = data.alamat || '';
+        document.getElementById('kabupaten').value = data.kabupaten || '';
+        document.getElementById('provinsi').value = data.provinsi || '';
+        document.getElementById('kepala_madrasah').value = data.kepala_madrasah || '';
+        document.getElementById('nip_kepala').value = data.nip_kepala || '';
+        
+        var tglInput = '';
+        if(data.tgl_cetak_raport && data.tgl_cetak_raport.includes('T')) {
+          tglInput = data.tgl_cetak_raport.split('T')[0];
+        } else {
+          tglInput = data.tgl_cetak_raport || '';
+        }
+        document.getElementById('tgl_cetak_raport').value = tglInput;
+
+        document.getElementById('view_nama').innerText = data.nama_madrasah || '-';
+        document.getElementById('view_nsm').innerText = data.nsm || '-';
+        document.getElementById('view_npsn').innerText = data.npsn || '-';
+        document.getElementById('view_alamat').innerText = data.alamat + ', ' + data.kabupaten + ', ' + data.provinsi;
+        document.getElementById('view_kepala').innerText = data.kepala_madrasah || '-';
+        document.getElementById('view_nip').innerText = data.nip_kepala || '-';
+        document.getElementById('view_tgl').innerText = window.formatTglID(tglInput);
+        
+        // Tampilkan gambar langsung dari Data URI base64
+        if(data.logo_url_drive && data.logo_url_drive.startsWith('data:image')) {
+          document.getElementById('view_logo').src = data.logo_url_drive;
+        }
+
+        document.getElementById('view-mode').classList.remove('d-none');
+        document.getElementById('edit-mode').classList.add('d-none');
+      } else {
+        document.getElementById('view-mode').classList.add('d-none');
+        document.getElementById('edit-mode').classList.remove('d-none');
+      }
+    })
+    .getSettingMadrasah();
+};
+
+window.simpanSettingData = function() {
+  var btn = document.getElementById('btnSimpanSetting');
+  btn.innerHTML = 'Menyimpan...';
+  btn.disabled = true;
+  var payload = {
+    id_setting: document.getElementById('id_setting').value,
+    logo_url_drive: document.getElementById('old_logo_base64').value, 
+    nama_madrasah: document.getElementById('nama_madrasah').value,
+    nsm: document.getElementById('nsm').value,
+    npsn: document.getElementById('npsn').value,
+    alamat: document.getElementById('alamat').value,
+    kabupaten: document.getElementById('kabupaten').value,
+    provinsi: document.getElementById('provinsi').value,
+    kepala_madrasah: document.getElementById('kepala_madrasah').value,
+    nip_kepala: document.getElementById('nip_kepala').value,
+    tgl_cetak_raport: document.getElementById('tgl_cetak_raport').value
+  };
+
+  if (window.tempImageData) {
+    payload.logo_base64 = window.tempImageData.base64;
+    payload.logo_name = window.tempImageData.name;
+    payload.logo_mimeType = window.tempImageData.mimeType;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.innerHTML = 'SIMPAN PENGATURAN';
+      btn.disabled = false;
+      if(res.status === 'success') {
+        Swal.fire({ icon: 'success', title: 'Berhasil!', text: res.message, background: 'rgba(15, 23, 42, 0.95)', color: '#fff', confirmButtonColor: '#0ea5e9' });
+        window.tempImageData = null; 
+        document.getElementById('logo_upload').value = '';
+        window.fetchSetting(); 
+      } else {
+        Swal.fire('Gagal', res.message, 'error');
+      }
+    })
+    .saveSettingMadrasah(payload);
+};
+
+window.fetchSetting();
+</script>

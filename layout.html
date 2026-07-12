@@ -1,0 +1,159 @@
+<!-- FILE: layout.html -->
+<style>
+  /* Animasi Transisi Halus */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .page-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+  /* Efek Kaca Sidebar */
+  #sidebar { width: 260px; height: 100vh; position: fixed; top: 0; left: 0; background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-right: 1px solid rgba(255,255,255,0.2); z-index: 1000; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  
+  /* Konten Utama */
+  #main-content { margin-left: 260px; padding: 15px 25px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); min-height: 100vh; }
+  
+  /* Mobile Responsif */
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); background: rgba(255,255,255,0.25); border-right: none; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+    #sidebar.active { transform: translateX(0); }
+    #main-content { margin-left: 0; padding: 10px 15px; }
+  }
+  
+  /* Menu Navigasi Samping */
+  .nav-menu { color: rgba(255,255,255,0.85); text-decoration: none; padding: 12px 20px; margin: 8px 15px; display: block; border-radius: 12px; font-weight: 500; transition: all 0.3s ease; }
+  .nav-menu:hover { background: rgba(255,255,255,0.15); color: #fff; transform: translateX(5px); }
+  .nav-menu.active { background: rgba(25, 135, 84, 0.85); color: #fff; box-shadow: 0 4px 15px rgba(25, 135, 84, 0.4); font-weight: 600; }
+  
+  /* Floating Navbar */
+  .floating-navbar { background: rgba(255,255,255,0.15); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); border-radius: 20px; margin-bottom: 25px; }
+
+  /* Kustomisasi Scrollbar Sidebar agar rapi */
+  #sidebar-scroll::-webkit-scrollbar { width: 5px; }
+  #sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+</style>
+
+<!-- SIDEBAR KIRI -->
+<div id="sidebar">
+  <div class="p-4 text-center border-bottom" style="border-color: rgba(255,255,255,0.15) !important;">
+    <h4 class="text-white fw-bold mb-0 text-glass" style="letter-spacing: 1px;"><i class="fa-solid fa-graduation-cap me-2"></i>SIM RAPORT</h4>
+    <span class="badge bg-success mt-2 px-3 py-1 rounded-pill" id="badge-role" style="box-shadow: 0 2px 8px rgba(0,0,0,0.2);">Role</span>
+  </div>
+  
+  <div id="sidebar-scroll" style="height: calc(100vh - 100px); overflow-y: auto; padding-bottom: 20px;">
+    <div class="mt-4">
+      <a href="#" onclick="window.navigate('dashboard', this)" class="nav-menu active"><i class="fa-solid fa-house me-3"></i> Dashboard</a>
+      
+      <!-- MENU KHUSUS ADMINISTRATOR -->
+      <div id="menu-master" style="display: none;">
+        <p class="text-white ms-4 mt-4 mb-2 fw-semibold" style="font-size: 0.7rem; letter-spacing: 1.5px; opacity: 0.6;">MASTER DATA</p>
+        <a href="#" onclick="window.navigate('guru', this)" class="nav-menu"><i class="fa-solid fa-chalkboard-user me-3"></i> Data Guru</a>
+        <a href="#" onclick="window.navigate('siswa', this)" class="nav-menu"><i class="fa-solid fa-users me-3"></i> Data Siswa</a>
+        <a href="#" onclick="window.navigate('kelas', this)" class="nav-menu"><i class="fa-solid fa-school me-3"></i> Data Kelas</a>
+        <a href="#" onclick="window.navigate('mapel', this)" class="nav-menu"><i class="fa-solid fa-book-open me-3"></i> Data Mapel</a>
+        <!-- Tambahkan menu pengaturan di sini -->
+        <a href="#" onclick="window.navigate('setting', this)" class="nav-menu"><i class="fa-solid fa-building-columns me-3"></i> Profil Madrasah</a>
+      </div>
+      <div id="menu-transaksi" style="display: none;">
+        <p class="text-white ms-4 mt-4 mb-2 fw-semibold" style="font-size: 0.7rem; letter-spacing: 1.5px; opacity: 0.6;">TRANSAKSI AKADEMIK</p>
+        <a href="#" onclick="window.navigate('plot_siswa', this)" class="nav-menu"><i class="fa-solid fa-users-viewfinder me-3"></i> Plotting Rombel</a>
+        <a href="#" onclick="window.navigate('plot_jadwal', this)" class="nav-menu"><i class="fa-solid fa-calendar-days me-3"></i> Jadwal Mengajar</a>
+        <!-- Tambahkan baris di bawah ini -->
+        <a href="#" onclick="window.navigate('input_nilai', this)" class="nav-menu"><i class="fa-solid fa-star-half-stroke me-3"></i> Input Nilai (UTS/UAS)</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- KONTEN UTAMA KANAN -->
+<div id="main-content">
+  <!-- TOPBAR NAVBAR -->
+  <nav class="navbar navbar-expand floating-navbar px-4 py-2">
+    <button class="btn btn-outline-light d-md-none me-3" style="border: none;" onclick="document.getElementById('sidebar').classList.toggle('active')">
+      <i class="fa-solid fa-bars fs-5"></i>
+    </button>
+    <div class="ms-auto d-flex align-items-center">
+      <span class="text-white me-3 fw-medium text-glass" id="topbar-name">Halo, User</span>
+      <button class="btn btn-danger btn-sm rounded-circle shadow-sm" style="width: 35px; height: 35px;" onclick="window.logout()">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- TEMPAT HALAMAN BERGANTI (Diberi kelas transisi) -->
+  <div id="page-content" class="page-fade-in">
+    <div class="d-flex flex-column justify-content-center align-items-center mt-5">
+      <div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    const session = JSON.parse(localStorage.getItem('sim_session'));
+    
+    // Logika Hak Akses Menu Berdasarkan Role
+    if(session) {
+      document.getElementById('topbar-name').innerText = "Halo, " + session.name;
+      document.getElementById('badge-role').innerText = session.role;
+      
+      // Jika yang login adalah Administrator, buka gembok menu Master & Transaksi
+      if(session.role === 'Administrator') {
+        document.getElementById('menu-master').style.display = 'block';
+        document.getElementById('menu-transaksi').style.display = 'block';
+      }
+    }
+    
+    // Langsung arahkan ke Dashboard saat aplikasi pertama kali dimuat
+    window.navigate('dashboard', document.querySelector('.nav-menu.active'));
+  });
+
+  window.navigate = function(page, element) {
+    // 1. Ubah state menu aktif di Sidebar
+    if(element) { 
+      $('.nav-menu').removeClass('active'); 
+      $(element).addClass('active'); 
+    }
+    
+    // 2. Tutup sidebar otomatis jika dibuka lewat HP
+    if(window.innerWidth <= 768) { 
+      document.getElementById('sidebar').classList.remove('active'); 
+    }
+    
+    const pageContainer = document.getElementById('page-content');
+    
+    // 3. Tampilkan animasi loading sementara HTML diunduh dari server
+    pageContainer.classList.remove('page-fade-in');
+    pageContainer.innerHTML = '<div class="d-flex flex-column align-items-center mt-5"><div class="spinner-border text-light"></div><p class="text-white mt-2" style="opacity:0.8;">Memuat data...</p></div>';
+    
+    // 4. Panggil Backend Code.gs (fungsi loadPage)
+    google.script.run.withSuccessHandler(function(html) {
+      pageContainer.innerHTML = html;
+      
+      // 5. Picu ulang animasi fade-in
+      void pageContainer.offsetWidth; 
+      pageContainer.classList.add('page-fade-in');
+      
+      // 6. Jalankan Script JS yang ada di dalam HTML yang baru dimuat
+      const scripts = pageContainer.getElementsByTagName('script');
+      for (let i = 0; i < scripts.length; i++) { 
+        try { eval(scripts[i].innerText); } catch(e) { console.error("Script error:", e); } 
+      }
+    }).loadPage(page);
+  };
+
+  window.logout = function() {
+    Swal.fire({ 
+      title: 'Keluar sistem?', 
+      icon: 'warning', 
+      showCancelButton: true, 
+      confirmButtonColor: '#dc3545', 
+      confirmButtonText: 'Ya, Keluar', 
+      background: 'rgba(255, 255, 255, 0.95)', 
+      backdrop: 'rgba(0,0,0,0.4)'
+    }).then((res) => { 
+      if (res.isConfirmed) { 
+        localStorage.removeItem('sim_session'); 
+        google.script.run.withSuccessHandler(window.renderHtml).loadPage('login'); 
+      } 
+    });
+  };
+</script>

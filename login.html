@@ -1,0 +1,143 @@
+<!-- FILE: login.html -->
+<style>
+  /* Animasi masuk form login */
+  @keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .login-wrapper {
+    animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  /* Ikon Avatar di Form Login */
+  .avatar-icon {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+</style>
+
+<div class="d-flex justify-content-center align-items-center w-100" style="min-height: 100vh; padding: 15px;">
+  
+  <div class="card glass-card p-4 p-md-5 login-wrapper" style="width: 100%; max-width: 420px;">
+    
+    <!-- Bagian Header & Sapaan -->
+    <div class="text-center mb-4">
+      <div class="avatar-icon">
+        <i class="fa-solid fa-user-shield fa-2x text-white"></i>
+      </div>
+      <!-- Sapaan Dinamis -->
+      <h5 class="text-white fw-medium mb-1 text-glass" id="greeting-text">Selamat Datang</h5>
+      
+      <h3 class="fw-bold text-white mt-3 mb-0 text-glass" style="letter-spacing: 1px;">PONDOK PESANTREN</h3>
+      <p class="text-white" style="opacity: 0.85; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">Irsyadul Mubtadi'in</p>
+    </div>
+    
+    <form id="formLogin" onsubmit="event.preventDefault(); window.handleLogin();">
+      <div class="mb-3">
+        <label class="form-label text-glass" style="font-size: 0.9rem; font-weight: 500;">Username / NIP</label>
+        <div class="input-group">
+          <span class="input-group-text glass-input" style="border-right: none; background: rgba(255,255,255,0.4) !important;">
+            <i class="fa-solid fa-user text-dark"></i>
+          </span>
+          <input type="text" class="form-control glass-input px-3 py-2" id="username" required placeholder="Masukkan akses Anda" style="border-left: none;">
+        </div>
+      </div>
+      
+      <div class="mb-4">
+        <label class="form-label text-glass" style="font-size: 0.9rem; font-weight: 500;">Password</label>
+        <div class="input-group">
+          <span class="input-group-text glass-input" style="border-right: none; background: rgba(255,255,255,0.4) !important;">
+            <i class="fa-solid fa-lock text-dark"></i>
+          </span>
+          <input type="password" class="form-control glass-input px-3 py-2" id="password" required placeholder="Kata sandi" style="border-left: none; border-right: none;">
+          <button class="btn glass-input" type="button" onclick="window.togglePassword()" style="border-left: none; border-radius: 0 10px 10px 0;">
+            <i class="fa-regular fa-eye text-dark" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn btn-success w-100 py-2 fw-bold mt-2 text-white" id="btnLogin" style="border-radius: 10px; box-shadow: 0 6px 20px rgba(25, 135, 84, 0.5); letter-spacing: 1px; transition: 0.3s;">
+        M A S U K <i class="fa-solid fa-arrow-right-to-bracket ms-2"></i>
+      </button>
+    </form>
+    
+    <div class="text-center mt-4">
+      <small class="text-white" style="opacity: 0.7;">&copy; 2026 Hak Cipta Dilindungi</small>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Script untuk memuat sapaan dinamis berdasarkan jam
+  function setDynamicGreeting() {
+    const hour = new Date().getHours();
+    let greeting = "";
+    
+    if (hour >= 4 && hour < 11) {
+      greeting = "Halo, Selamat Pagi";
+    } else if (hour >= 11 && hour < 15) {
+      greeting = "Halo, Selamat Siang ";
+    } else if (hour >= 15 && hour < 18) {
+      greeting = "Halo, Selamat Sore";
+    } else {
+      greeting = "Halo, Selamat Malam";
+    }
+    
+    document.getElementById('greeting-text').innerText = greeting;
+  }
+
+  // Panggil sapaan langsung saat file HTML ini dimuat
+  setDynamicGreeting();
+
+  window.togglePassword = function() {
+    const passInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    if (passInput.type === 'password') {
+      passInput.type = 'text';
+      eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      passInput.type = 'password';
+      eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  };
+
+  window.handleLogin = function() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    const btn = document.getElementById('btnLogin');
+    
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+    btn.disabled = true;
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.status === "success") {
+          localStorage.setItem('sim_session', JSON.stringify(response));
+          Swal.fire({
+            icon: 'success', title: 'Berhasil', text: response.message, timer: 1000, showConfirmButton: false
+          }).then(() => {
+            document.getElementById('app-container').innerHTML = '<div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 100vh;"><div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div></div>';
+            google.script.run.withSuccessHandler(window.renderHtml).loadPage('layout');
+          });
+        } else {
+          Swal.fire('Gagal', response.message, 'error');
+          btn.innerHTML = 'M A S U K <i class="fa-solid fa-arrow-right-to-bracket ms-2"></i>';
+          btn.disabled = false;
+        }
+      })
+      .withFailureHandler(function(error) {
+        Swal.fire('Error', 'Kesalahan koneksi ke server.', 'error');
+        btn.innerHTML = 'M A S U K <i class="fa-solid fa-arrow-right-to-bracket ms-2"></i>';
+        btn.disabled = false;
+      })
+      .prosesLogin(user, pass);
+  };
+</script>

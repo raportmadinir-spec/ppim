@@ -1,0 +1,93 @@
+// ==========================================
+// FILE: Setting.js
+// FUNGSI: Modul Pengaturan Profil Madrasah (Menyimpan Logo Tanpa Google Drive)
+// ==========================================
+function getSettingMadrasah() {
+  try {
+    const sheet = DB.getSheet('set_madrasah');
+    const allData = sheet.getDataRange().getDisplayValues();
+    
+    // Auto-repair header jika kosong
+    if (allData.length === 0 || allData[0].length < 11) {
+      sheet.getRange(1, 1, 1, 11).setValues([['id_setting', 'nama_madrasah', 'nsm', 'npsn', 'alamat', 'kabupaten', 'provinsi', 'kepala_madrasah', 'nip_kepala', 'logo_url_drive', 'tgl_cetak_raport']]);
+      return { status: "success", data: null };
+    }
+    if (allData.length > 1) {
+      const headers = allData[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+      let obj = {};
+      headers.forEach((h, idx) => {
+        // Ambil data asli (bukan display value) khusus untuk logo agar Base64 utuh
+        if (h === 'logo_url_drive') {
+          obj[h] = sheet.getRange(2, idx + 1).getValue();
+        } else {
+          obj[h] = allData[1][idx]; 
+        }
+      });
+      return { status: "success", data: obj };
+    }
+    
+    return { status: "success", data: null };
+  } catch (e) {
+    return { status: "error", message: e.toString() };
+  }
+}
+
+function saveSettingMadrasah(dataObj) {
+  try {
+    const sheet = DB.getSheet('set_madrasah');
+    let allData = sheet.getDataRange().getValues();
+    
+    // Auto-repair header jika kosong
+    if (allData.length === 0 || allData[0].length < 11) {
+      sheet.getRange(1, 1, 1, 11).setValues([['id_setting', 'nama_madrasah', 'nsm', 'npsn', 'alamat', 'kabupaten', 'provinsi', 'kepala_madrasah', 'nip_kepala', 'logo_url_drive', 'tgl_cetak_raport']]);
+      allData = sheet.getDataRange().getValues();
+    }
+    const headers = allData[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+    const idx = {
+      id: headers.indexOf('id_setting'),
+      nama: headers.indexOf('nama_madrasah'),
+      nsm: headers.indexOf('nsm'),
+      npsn: headers.indexOf('npsn'),
+      alamat: headers.indexOf('alamat'),
+      kabupaten: headers.indexOf('kabupaten'),
+      provinsi: headers.indexOf('provinsi'),
+      kepala: headers.indexOf('kepala_madrasah'),
+      nip: headers.indexOf('nip_kepala'),
+      logo: headers.indexOf('logo_url_drive'),
+      tgl: headers.indexOf('tgl_cetak_raport')
+    };
+    let rowData = new Array(headers.length).fill("");
+    rowData[idx.id] = dataObj.id_setting || Utilities.getUuid();
+    if(idx.nama > -1) rowData[idx.nama] = dataObj.nama_madrasah;
+    if(idx.nsm > -1) rowData[idx.nsm] = dataObj.nsm;
+    if(idx.npsn > -1) rowData[idx.npsn] = dataObj.npsn;
+    if(idx.alamat > -1) rowData[idx.alamat] = dataObj.alamat;
+    if(idx.kabupaten > -1) rowData[idx.kabupaten] = dataObj.kabupaten;
+    if(idx.provinsi > -1) rowData[idx.provinsi] = dataObj.provinsi;
+    if(idx.kepala > -1) rowData[idx.kepala] = dataObj.kepala_madrasah;
+    if(idx.nip > -1) rowData[idx.nip] = dataObj.nip_kepala;
+    
+    // Jika ada upload gambar baru, gunakan itu. Jika tidak, tetap gunakan yang lama.
+    if(idx.logo > -1) {
+      if (dataObj.logo_base64) {
+        // Gabungkan format Data URL agar bisa langsung ditampilkan di elemen <img>
+        rowData[idx.logo] = "data:" + dataObj.logo_mimeType + ";base64," + dataObj.logo_base64;
+      } else {
+        rowData[idx.logo] = dataObj.logo_url_drive; 
+      }
+    }
+    
+    if(idx.tgl > -1) rowData[idx.tgl] = dataObj.tgl_cetak_raport;
+    if (allData.length > 1) {
+      // UPDATE baris ke-2
+      sheet.getRange(2, 1, 1, headers.length).setValues([rowData]);
+      return { status: "success", message: "Profil madrasah berhasil diperbarui!" };
+    } else {
+      // INSERT jika belum ada
+      sheet.appendRow(rowData);
+      return { status: "success", message: "Profil madrasah berhasil disimpan!" };
+    }
+  } catch (e) {
+    return { status: "error", message: e.toString() };
+  }
+}

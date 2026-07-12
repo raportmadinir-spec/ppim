@@ -1,0 +1,140 @@
+<!-- FILE: input_absen.html -->
+<style>
+  .table-glass-blue { border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.05); width: 100%; border: 1px solid rgba(0,0,0,0.1); }
+  .table-glass-blue thead th { background: #0f172a !important; color: #f8fafc !important; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; padding: 12px; }
+  .table-glass-blue tbody td { background: #ffffff !important; color: #334155 !important; border-bottom: 1px solid #e2e8f0; padding: 8px 12px; vertical-align: middle; }
+  .inp-absen { background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 6px; font-weight: 700; text-align: center; width: 60px; }
+  .inp-catatan { background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 6px; width: 100%; font-size: 0.9rem; padding: 5px 10px; }
+  .inp-absen:focus, .inp-catatan:focus { border-color: #0ea5e9; background: #ffffff; outline: none; }
+</style>
+
+<div class="row mb-3">
+  <div class="col-12">
+    <h4 class="text-glass fw-bold mb-1">Kehadiran & Catatan Wali Kelas</h4>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.85rem;">Input jumlah absen dan catatan motivasi santri untuk dicetak di raport.</p>
+  </div>
+</div>
+
+<div class="card glass-card p-3 mb-4" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label text-white fw-medium mb-1">Tahun Ajaran</label>
+      <select id="absen_ta" class="form-select form-control-glass"></select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-white fw-medium mb-1">Kelas</label>
+      <select id="absen_kelas" class="form-select form-control-glass"><option value="">-- Pilih Kelas --</option></select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-white fw-medium mb-1">Jenis Raport</label>
+      <select id="absen_jenis" class="form-select form-control-glass">
+        <option value="UTS">Raport UTS</option>
+        <option value="UAS">Raport UAS</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-warning w-100 fw-bold py-2 shadow-lg" onclick="window.fetchAbsen()" style="border-radius: 8px;">
+        <i class="fa-solid fa-pen-to-square me-2"></i> BUKA FORM INPUT
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card glass-card p-3 p-md-4 d-none" id="panel-absen">
+  <div class="table-responsive">
+    <table class="table table-glass-blue">
+      <thead>
+        <tr>
+          <th width="5%" class="text-center">No</th>
+          <th width="20%">Nama Santri</th>
+          <th width="10%" class="text-center" title="Sakit">S (Hari)</th>
+          <th width="10%" class="text-center" title="Izin">I (Hari)</th>
+          <th width="10%" class="text-center" title="Tanpa Keterangan">A (Hari)</th>
+          <th width="45%">Catatan Wali Kelas</th>
+        </tr>
+      </thead>
+      <tbody id="body-absen"></tbody>
+    </table>
+  </div>
+  <div class="text-end mt-4">
+    <button class="btn btn-primary fw-bold px-5 py-2 shadow" onclick="window.simpanAbsen()" id="btnSimpanAbsen" style="border-radius: 8px;">
+      <i class="fa-solid fa-floppy-disk me-2"></i> SIMPAN DATA
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  window.initFilterAbsen = function() {
+    var ta = document.getElementById('absen_ta');
+    if(!ta) return;
+    var curr = new Date().getFullYear(); 
+    var htmlTA = '';
+    for(var y = 2024; y <= 2050; y++) {
+      var next = y + 1;
+      htmlTA += '<option value="'+y+'/'+next+'" '+(y===curr?'selected':'')+'>'+y+'/'+next+'</option>';
+    }
+    ta.innerHTML = htmlTA;
+    google.script.run.withSuccessHandler(function(res) {
+      if(res && res.status==='success' && res.kelas) {
+        var htmlK = '<option value="">-- Pilih Kelas --</option>';
+        res.kelas.forEach(function(k){ htmlK += '<option value="'+k.id_kelas+'">'+k.nama_kelas+'</option>'; });
+        document.getElementById('absen_kelas').innerHTML = htmlK;
+      }
+    }).getInitNilai(); 
+  };
+
+  window.fetchAbsen = function() {
+    var ta = document.getElementById('absen_ta').value;
+    var kl = document.getElementById('absen_kelas').value;
+    var jn = document.getElementById('absen_jenis').value;
+    if(!kl) return Swal.fire('Perhatian', 'Pilih Kelas!', 'warning');
+
+    Swal.fire({ title: 'Memuat Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+    google.script.run.withSuccessHandler(function(res) {
+      Swal.close();
+      if(res.status === 'success') {
+        var html = '';
+        res.data.forEach(function(s, i) {
+          html += '<tr>';
+          html += '<td class="text-center">'+(i+1)+'</td>';
+          html += '<td class="fw-bold"><input type="hidden" class="inp-sid" value="'+s.id_siswa+'">'+s.nama+'</td>';
+          html += '<td class="text-center"><input type="number" min="0" class="inp-absen i-s" value="'+s.sakit+'"></td>';
+          html += '<td class="text-center"><input type="number" min="0" class="inp-absen i-i" value="'+s.izin+'"></td>';
+          html += '<td class="text-center"><input type="number" min="0" class="inp-absen i-a" value="'+s.alpha+'"></td>';
+          html += '<td><input type="text" class="inp-catatan i-c" value="'+s.catatan+'" placeholder="Cth: Tingkatkan belajarnya..."></td>';
+          html += '</tr>';
+        });
+        document.getElementById('body-absen').innerHTML = html;
+        document.getElementById('panel-absen').classList.remove('d-none');
+      } else { Swal.fire('Gagal', res.message, 'error'); }
+    }).getSiswaDanAbsen(ta, kl, jn);
+  };
+
+  window.simpanAbsen = function() {
+    var ta = document.getElementById('absen_ta').value;
+    var kl = document.getElementById('absen_kelas').value;
+    var jn = document.getElementById('absen_jenis').value;
+    var arr = [];
+    document.querySelectorAll('#body-absen tr').forEach(function(tr) {
+      arr.push({
+        id_siswa: tr.querySelector('.inp-sid').value,
+        sakit: tr.querySelector('.i-s').value,
+        izin: tr.querySelector('.i-i').value,
+        alpha: tr.querySelector('.i-a').value,
+        catatan: tr.querySelector('.i-c').value
+      });
+    });
+
+    var btn = document.getElementById('btnSimpanAbsen');
+    btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
+    google.script.run.withSuccessHandler(function(res) {
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> SIMPAN DATA'; btn.disabled = false;
+      if(res.status==='success') Swal.fire('Berhasil!', res.message, 'success');
+      else Swal.fire('Gagal', res.message, 'error');
+    }).saveAbsenKolektif(ta, kl, jn, arr);
+  };
+
+  setTimeout(window.initFilterAbsen, 100);
+})();
+</script>

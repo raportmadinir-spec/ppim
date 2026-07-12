@@ -1,0 +1,319 @@
+<!-- FILE: raport.html -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  .card-glass-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); backdrop-filter: blur(10px); }
+  .form-control-glass { background: rgba(255,255,255,0.9) !important; border: 1px solid rgba(0,0,0,0.1) !important; border-radius: 8px; color: #333; font-weight: 500; }
+  
+  /* Wadah Render PDF & Data HTML (Disembunyikan total dari layar utama) */
+  #render-area { position: absolute; left: -9999px; top: 0; width: 210mm; background: white; z-index: -10; display: none; }
+</style>
+
+<div class="row mb-3">
+  <div class="col-12 text-center text-md-start">
+    <h4 class="text-glass fw-bold mb-1">Cetak Raport Santri</h4>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.85rem;">Pilih untuk langsung mendownload PDF atau Buka Preview di Browser Chrome.</p>
+  </div>
+</div>
+
+<!-- PANEL FILTER & TOMBOL AKSI -->
+<div class="card card-glass-form p-4 mb-5">
+  <div class="row g-3 align-items-end justify-content-center">
+    <div class="col-md-3">
+      <label class="form-label text-white fw-medium mb-1">Tahun Ajaran</label>
+      <select id="r_ta" class="form-select form-control-glass"></select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-white fw-medium mb-1">Kelas</label>
+      <select id="r_kelas" class="form-select form-control-glass"><option value="">-- Pilih Kelas --</option></select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-white fw-medium mb-1">Jenis Raport</label>
+      <select id="r_jenis" class="form-select form-control-glass">
+        <option value="UTS">Raport UTS</option>
+        <option value="UAS">Raport UAS</option>
+      </select>
+    </div>
+  </div>
+
+  <hr class="border-secondary mt-4 mb-4">
+
+  <!-- DUA TOMBOL UTAMA -->
+  <div class="row justify-content-center gap-3">
+    <div class="col-md-5">
+      <button class="btn w-100 fw-bold py-3 shadow-lg text-white" onclick="window.aksiDownloadPDF()" id="btnDownload" style="background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; border-radius: 12px; font-size:1.05rem;">
+        <i class="fa-solid fa-file-pdf me-2"></i> 1. DOWNLOAD PDF
+      </button>
+      <div class="text-center mt-2 text-white-50" style="font-size: 0.75rem;">Mengunduh file langsung ke komputer</div>
+    </div>
+    <div class="col-md-5">
+      <button class="btn btn-warning w-100 fw-bold py-3 shadow-lg" onclick="window.aksiBukaDiChrome()" id="btnChrome" style="border-radius: 12px; font-size:1.05rem;">
+        <i class="fa-brands fa-chrome me-2"></i> 2. PREVIEW & PRINT (CHROME)
+      </button>
+      <div class="text-center mt-2 text-white-50" style="font-size: 0.75rem;">Membuka tab di Chrome untuk dicetak</div>
+    </div>
+  </div>
+</div>
+
+<!-- WADAH PENGOLAH DATA (TIDAK TERLIHAT) -->
+<div id="render-area"></div>
+
+<script>
+(function() {
+  function terbilang(angka) {
+    if(angka === "" || isNaN(angka)) return "-";
+    var a = parseInt(angka);
+    var bil = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+    if (a < 12) return bil[a]; else if (a < 20) return bil[a - 10] + " Belas"; else if (a < 100) return bil[Math.floor(a / 10)] + " Puluh " + bil[a % 10]; else if (a === 100) return "Seratus"; return "-";
+  }
+
+  function getPredikat(angka) {
+    if(angka === "" || isNaN(angka)) return "-";
+    var a = parseInt(angka);
+    if(a >= 90) return "A"; if(a >= 80) return "B"; if(a >= 70) return "C"; if(a >= 60) return "D"; return "E";
+  }
+
+  function getTanggalHariIni() {
+    var months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    var date = new Date(); return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+  }
+
+  window.initFilterRaport = function() {
+    var ta = document.getElementById('r_ta');
+    if(!ta) return; 
+    var curr = new Date().getFullYear(); 
+    var htmlTA = '';
+    for(var y = 2024; y <= 2050; y++) { htmlTA += '<option value="'+y+'/'+(y+1)+'" '+(y===curr?'selected':'')+'>'+y+'/'+(y+1)+'</option>'; }
+    ta.innerHTML = htmlTA;
+    google.script.run.withSuccessHandler(function(res) {
+      if(res && res.status === 'success' && res.kelas) {
+        var htmlK = '<option value="">-- Pilih Kelas --</option>';
+        res.kelas.forEach(function(k) { htmlK += '<option value="' + k.id_kelas + '">' + k.nama_kelas + '</option>'; });
+        document.getElementById('r_kelas').innerHTML = htmlK;
+      }
+    }).getInitNilai(); 
+  };
+
+  // =========================================================
+  // FUNGSI INTI: MERAKIT HTML RAPORT
+  // =========================================================
+  function getHtmlRaport(res, kelas, ta, jenis, isForChrome) {
+    var tglCetak = getTanggalHariIni();
+    var titleRaport = jenis === 'UTS' ? "LAPORAN HASIL BELAJAR TENGAH SEMESTER" : "LAPORAN HASIL BELAJAR AKHIR SEMESTER";
+    var html = '';
+
+    // Jika untuk Chrome, kita tambahkan struktur <head> dan tombol print melayang
+    if(isForChrome) {
+      html += '<!DOCTYPE html><html><head><title>Raport - ' + kelas + '</title>';
+      html += '<style>';
+      html += `
+        @page { size: A4 portrait; margin: 10mm 15mm 15mm 15mm; }
+        body { font-family: 'Times New Roman', Times, serif; color: #000; background: #e2e8f0; margin: 0; padding: 20px 0; }
+        .page-raport { background: #fff; width: 210mm; min-height: 297mm; margin: 0 auto; box-sizing: border-box; padding: 10mm 15mm 15mm 15mm; box-shadow: 0 10px 20px rgba(0,0,0,0.2); margin-bottom: 20px; page-break-after: always; }
+        .page-raport:last-child { page-break-after: auto; }
+        .kop-surat { display: flex; align-items: center; border-bottom: 3px solid #000; padding-bottom: 5px; margin-bottom: 2px; }
+        .kop-surat-inner { border-bottom: 1px solid #000; margin-bottom: 15px; width: 100%; height: 2px; }
+        .img-logo { width: 80px; height: 80px; object-fit: contain; margin-right: 20px; }
+        .kop-text { flex: 1; text-align: center; line-height: 1.1; }
+        .kop-text h2 { margin: 0; font-size: 16pt; font-weight: bold; text-transform: uppercase; }
+        .kop-text p { margin: 3px 0 0 0; font-size: 10.5pt; }
+        .judul-raport { text-align: center; font-size: 13pt; font-weight: bold; margin-bottom: 15px; text-decoration: underline; text-transform: uppercase; }
+        .biodata-table { width: 100%; font-size: 10.5pt; margin-bottom: 15px; border-collapse: collapse; }
+        .biodata-table td { padding: 2px 0; vertical-align: top; }
+        .tabel-nilai { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-bottom: 15px; }
+        .tabel-nilai th, .tabel-nilai td { border: 1px solid #000; padding: 5px 6px; vertical-align: middle; }
+        .tabel-nilai th { background-color: #f0f0f0; text-align: center; font-weight: bold; -webkit-print-color-adjust: exact; }
+        .tabel-nilai tr { page-break-inside: avoid; }
+        .footer-raport { page-break-inside: avoid; margin-top: 20px; }
+        .bottom-section { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 25px; font-size: 10.5pt; }
+        .box-kehadiran { width: 45%; border: 1px solid #000; border-collapse: collapse; }
+        .box-kehadiran th, .box-kehadiran td { border: 1px solid #000; padding: 4px 6px; }
+        .box-catatan { width: 55%; border: 1px solid #000; padding: 10px; min-height: 70px; }
+        .ttd-section { width: 100%; font-size: 10.5pt; page-break-inside: avoid; }
+        .ttd-table { width: 100%; text-align: center; border-collapse: collapse; }
+        .ttd-table td { width: 33.33%; vertical-align: bottom; }
+        .nama-ttd { font-weight: bold; text-decoration: underline; display: inline-block; margin-top: 50px; }
+        .nama-kepala { font-weight: bold; text-decoration: underline; font-size: 10.5pt; display: inline-block; margin-top: 50px; }
+        
+        /* Tombol Print Melayang di Chrome */
+        .btn-print { position: fixed; bottom: 30px; right: 30px; background: #2563eb; color: white; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4); z-index: 1000; }
+        .btn-print:hover { background: #1d4ed8; }
+        @media print { .btn-print, body { background: #fff; padding:0; } .page-raport { box-shadow: none; padding:0; margin:0; } }
+      `;
+      html += '</style></head><body>';
+      html += '<button class="btn-print" onclick="window.print()">🖨️ CETAK RAPORT SEKARANG</button>';
+    }
+
+    res.data_raport.forEach(function(r, idx) {
+      if(!isForChrome && idx > 0) html += '<div class="html2pdf__page-break"></div>';
+      
+      html += '<div class="page-raport">';
+      
+      html += '<div class="kop-surat">';
+      if(res.madrasah.logo) html += '<img src="' + res.madrasah.logo + '" class="img-logo">';
+      else html += '<div class="img-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center;">LOGO</div>';
+      html += '<div class="kop-text"><h2>' + res.madrasah.nama + '</h2><p>NSM: ' + res.madrasah.nsm + ' | NPSN: ' + res.madrasah.npsn + '</p><p>' + res.madrasah.alamat + '</p></div></div><div class="kop-surat-inner"></div>';
+
+      html += '<div class="judul-raport">' + titleRaport + '</div>';
+      html += '<table class="biodata-table">';
+      html += '<tr><td width="15%">Nama Santri</td><td width="2%">:</td><td width="48%"><strong>' + r.info.nama + '</strong></td><td width="15%">Kelas</td><td width="2%">:</td><td width="18%">' + kelas + '</td></tr>';
+      html += '<tr><td>Nomor Induk</td><td>:</td><td>' + r.info.nis + '</td><td>Tahun Ajaran</td><td>:</td><td>' + ta + '</td></tr>';
+      html += '</table>';
+
+      html += '<table class="tabel-nilai"><thead><tr><th width="5%" rowspan="2">NO</th><th width="45%" rowspan="2">MATA PELAJARAN</th><th colspan="3">NILAI HASIL BELAJAR</th></tr>';
+      html += '<tr><th width="10%">Angka</th><th width="30%">Huruf</th><th width="10%">Predikat</th></tr></thead><tbody>';
+      r.nilai.forEach(function(m, index) {
+          var val = m.nilai;
+          html += '<tr><td style="text-align:center;">' + (index + 1) + '</td><td>' + m.nama_mapel + '</td><td style="text-align:center; font-weight:bold;">' + (val===""?"-":val) + '</td><td style="text-transform:capitalize; font-style:italic;">' + terbilang(val) + '</td><td style="text-align:center; font-weight:bold;">' + getPredikat(val) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+
+      html += '<div class="footer-raport"><div class="bottom-section">';
+      html += '  <table class="box-kehadiran"><tr><th colspan="2" style="text-align:center; background:#f0f0f0;">KETIDAKHADIRAN</th></tr>';
+      html += '    <tr><td width="60%">1. Sakit</td><td width="40%" style="text-align:center; font-weight:bold;">' + (r.absen.sakit ? r.absen.sakit + ' Hari' : '-') + '</td></tr>';
+      html += '    <tr><td>2. Izin</td><td style="text-align:center; font-weight:bold;">' + (r.absen.izin ? r.absen.izin + ' Hari' : '-') + '</td></tr>';
+      html += '    <tr><td>3. Tanpa Keterangan</td><td style="text-align:center; font-weight:bold;">' + (r.absen.alpha ? r.absen.alpha + ' Hari' : '-') + '</td></tr>';
+      html += '  </table>';
+      html += '  <div class="box-catatan"><strong>Catatan Wali Kelas:</strong><br><br><div style="font-style:italic; font-size:11pt; line-height:1.4;">' + (r.absen.catatan ? r.absen.catatan : '-') + '</div></div>';
+      html += '</div>';
+
+      var kotaMadrasah = res.madrasah.alamat.split(',')[1] || "Kota"; if(kotaMadrasah) kotaMadrasah = kotaMadrasah.split('-')[0].trim();
+      html += '<div class="ttd-section"><table class="ttd-table"><tr>';
+      html += '<td>Mengetahui,<br>Orang Tua / Wali<br><br><span class="nama-ttd">....................................</span></td>';
+      html += '<td><br>Wali Kelas<br><br><span class="nama-ttd">....................................</span></td>';
+      html += '<td>' + kotaMadrasah + ', ' + tglCetak + '<br>Kepala Madrasah<br><br><span class="nama-kepala">' + res.madrasah.kepala + '</span><br>NIP. ' + res.madrasah.nip + '</td>';
+      html += '</tr></table></div></div></div>'; 
+    });
+    
+    if(isForChrome) html += '</body></html>';
+    
+    return html;
+  }
+
+  // =========================================================
+  // AKSI 1: DOWNLOAD FILE PDF (BACKGROUND PROSES)
+  // =========================================================
+  window.aksiDownloadPDF = function() {
+    var ta = document.getElementById('r_ta').value;
+    var elKelas = document.getElementById('r_kelas');
+    var idKelas = elKelas.value;
+    var namaKelas = elKelas.options[elKelas.selectedIndex].text;
+    var jenis = document.getElementById('r_jenis').value;
+
+    if(!idKelas) return Swal.fire('Perhatian', 'Pilih Kelas terlebih dahulu!', 'warning');
+
+    var btn = document.getElementById('btnDownload');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> MEMPROSES...'; btn.disabled = true;
+
+    google.script.run.withSuccessHandler(function(res) {
+        if(res.status === 'success') {
+          var renderArea = document.getElementById('render-area');
+          
+          // Inject HTML polos tanpa head/body tag khusus html2pdf
+          renderArea.innerHTML = `
+            <style>
+              .pdf-paper { font-family: 'Times New Roman', Times, serif; color: #000; width: 100%; box-sizing: border-box; }
+              .kop-surat { display: flex; align-items: center; border-bottom: 3px solid #000; padding-bottom: 5px; margin-bottom: 2px; }
+              .kop-surat-inner { border-bottom: 1px solid #000; margin-bottom: 15px; width: 100%; height: 2px; }
+              .img-logo { width: 80px; height: 80px; object-fit: contain; margin-right: 20px; }
+              .kop-text { flex: 1; text-align: center; line-height: 1.1; }
+              .kop-text h2 { margin: 0; font-size: 16pt; font-weight: bold; text-transform: uppercase; }
+              .kop-text p { margin: 3px 0 0 0; font-size: 10.5pt; }
+              .judul-raport { text-align: center; font-size: 13pt; font-weight: bold; margin-bottom: 15px; text-decoration: underline; text-transform: uppercase; }
+              .biodata-table { width: 100%; font-size: 10.5pt; margin-bottom: 15px; border-collapse: collapse; }
+              .biodata-table td { padding: 2px 0; vertical-align: top; }
+              .tabel-nilai { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-bottom: 15px; }
+              .tabel-nilai th, .tabel-nilai td { border: 1px solid #000; padding: 5px 6px; vertical-align: middle; }
+              .tabel-nilai th { background-color: #f0f0f0; text-align: center; font-weight: bold; -webkit-print-color-adjust: exact; }
+              .tabel-nilai tr { page-break-inside: avoid; }
+              .footer-raport { page-break-inside: avoid; margin-top: 20px; }
+              .bottom-section { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 25px; font-size: 10.5pt; }
+              .box-kehadiran { width: 45%; border: 1px solid #000; border-collapse: collapse; }
+              .box-kehadiran th, .box-kehadiran td { border: 1px solid #000; padding: 4px 6px; }
+              .box-catatan { width: 55%; border: 1px solid #000; padding: 10px; min-height: 70px; }
+              .ttd-section { width: 100%; font-size: 10.5pt; page-break-inside: avoid; }
+              .ttd-table { width: 100%; text-align: center; border-collapse: collapse; }
+              .ttd-table td { width: 33.33%; vertical-align: bottom; }
+              .nama-ttd { font-weight: bold; text-decoration: underline; display: inline-block; margin-top: 50px; }
+              .nama-kepala { font-weight: bold; text-decoration: underline; font-size: 10.5pt; display: inline-block; margin-top: 50px; }
+            </style>
+            <div class="pdf-paper">${getHtmlRaport(res, namaKelas, ta, jenis, false)}</div>
+          `;
+          
+          renderArea.style.display = 'block'; 
+          
+          var filenameClean = 'Raport_' + jenis + '_' + namaKelas.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+          var opt = {
+            margin:       [10, 15, 15, 15], 
+            filename:     filenameClean,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:    { mode: ['css', 'legacy'] }
+          };
+
+          html2pdf().set(opt).from(renderArea).save().then(function() {
+             renderArea.style.display = 'none'; 
+             btn.innerHTML = '<i class="fa-solid fa-file-pdf me-2"></i> 1. DOWNLOAD PDF'; btn.disabled = false;
+             Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File telah diunduh ke komputer Anda.', confirmButtonColor: '#ef4444' });
+          }).catch(function(err) {
+             renderArea.style.display = 'none'; 
+             btn.innerHTML = '<i class="fa-solid fa-file-pdf me-2"></i> 1. DOWNLOAD PDF'; btn.disabled = false;
+             Swal.fire('Gagal Render PDF', err.toString(), 'error');
+          });
+
+        } else {
+          btn.innerHTML = '<i class="fa-solid fa-file-pdf me-2"></i> 1. DOWNLOAD PDF'; btn.disabled = false;
+          Swal.fire('Gagal', res.message, 'error'); 
+        }
+      }).getRaportData(ta, idKelas, jenis);
+  };
+
+  // =========================================================
+  // AKSI 2: LEMPAR KE CHROME (MENGGUNAKAN BLOB TRICK)
+  // =========================================================
+  window.aksiBukaDiChrome = function() {
+    var ta = document.getElementById('r_ta').value;
+    var elKelas = document.getElementById('r_kelas');
+    var idKelas = elKelas.value;
+    var namaKelas = elKelas.options[elKelas.selectedIndex].text;
+    var jenis = document.getElementById('r_jenis').value;
+
+    if(!idKelas) return Swal.fire('Perhatian', 'Pilih Kelas terlebih dahulu!', 'warning');
+
+    var btn = document.getElementById('btnChrome');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> MENYIAPKAN...'; btn.disabled = true;
+
+    google.script.run.withSuccessHandler(function(res) {
+        btn.innerHTML = '<i class="fa-brands fa-chrome me-2"></i> 2. PREVIEW & PRINT (CHROME)'; btn.disabled = false;
+        
+        if(res.status === 'success') {
+          // Rakit HTML penuh (termasuk tag <html> dan styling CSS khusus Chrome)
+          var fullHtmlContent = getHtmlRaport(res, namaKelas, ta, jenis, true);
+          
+          // Trik Blob: Mengubah teks HTML menjadi sebuah "File Virtual"
+          var blob = new Blob([fullHtmlContent], { type: 'text/html' });
+          var blobUrl = URL.createObjectURL(blob);
+          
+          // Trik Lempar Keluar: Membuat link gaib dan memaksanya diklik ke target="_blank"
+          var link = document.createElement('a');
+          link.href = blobUrl;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          Swal.fire({
+            icon: 'info',
+            title: 'Membuka Browser...',
+            text: 'Raport sedang dibuka di jendela browser baru. Jika tidak muncul, pastikan aplikasi Anda tidak memblokir pop-up tab.',
+            confirmButtonColor: '#f59e0b'
+          });
+
+        } else { Swal.fire('Gagal', res.message, 'error'); }
+      }).getRaportData(ta, idKelas, jenis);
+  };
+
+  setTimeout(window.initFilterRaport, 100);
+})();
+</script>

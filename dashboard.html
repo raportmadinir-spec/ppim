@@ -1,0 +1,122 @@
+<!-- FILE: dashboard.html -->
+<style>
+  .hover-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+  .hover-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important; background: rgba(255, 255, 255, 0.2); }
+  
+  /* Memastikan ukuran angka tetap stabil saat loading spinner muncul */
+  .stat-number { min-height: 40px; display: flex; align-items: center; justify-content: center; }
+</style>
+
+<div class="row mb-4">
+  <div class="col-12 text-center text-md-start">
+    <h3 class="text-glass fw-bold mb-1">Dashboard Analitik</h3>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.9rem;">Ringkasan data madrasah tahun ajaran aktif.</p>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Card Guru -->
+  <div class="col-6 col-md-3">
+    <div class="card glass-card h-100 p-4 text-center hover-card d-flex flex-column align-items-center">
+      <i class="fa-solid fa-chalkboard-user fa-3x mb-3 text-white" style="opacity: 0.95;"></i>
+      <!-- Tampilan Default Awal: Loading Spinner -->
+      <h2 class="fw-bold text-white mb-0 text-glass stat-number" id="stat-guru">
+        <span class="spinner-border spinner-border-sm text-light"></span>
+      </h2>
+      <span class="text-white mt-1" style="opacity: 0.9; font-size: 0.85rem; letter-spacing: 0.5px;">TOTAL GURU</span>
+    </div>
+  </div>
+  
+  <!-- Card Siswa -->
+  <div class="col-6 col-md-3">
+    <div class="card glass-card h-100 p-4 text-center hover-card d-flex flex-column align-items-center">
+      <i class="fa-solid fa-users fa-3x mb-3 text-white" style="opacity: 0.95;"></i>
+      <h2 class="fw-bold text-white mb-0 text-glass stat-number" id="stat-siswa">
+        <span class="spinner-border spinner-border-sm text-light"></span>
+      </h2>
+      <span class="text-white mt-1" style="opacity: 0.9; font-size: 0.85rem; letter-spacing: 0.5px;">SISWA AKTIF</span>
+    </div>
+  </div>
+  
+  <!-- Card Kelas -->
+  <div class="col-6 col-md-3">
+    <div class="card glass-card h-100 p-4 text-center hover-card d-flex flex-column align-items-center">
+      <i class="fa-solid fa-school fa-3x mb-3 text-white" style="opacity: 0.95;"></i>
+      <h2 class="fw-bold text-white mb-0 text-glass stat-number" id="stat-kelas">
+        <span class="spinner-border spinner-border-sm text-light"></span>
+      </h2>
+      <span class="text-white mt-1" style="opacity: 0.9; font-size: 0.85rem; letter-spacing: 0.5px;">ROMBEL KELAS</span>
+    </div>
+  </div>
+  
+  <!-- Card Mapel -->
+  <div class="col-6 col-md-3">
+    <div class="card glass-card h-100 p-4 text-center hover-card d-flex flex-column align-items-center">
+      <i class="fa-solid fa-book fa-3x mb-3 text-white" style="opacity: 0.95;"></i>
+      <h2 class="fw-bold text-white mb-0 text-glass stat-number" id="stat-mapel">
+        <span class="spinner-border spinner-border-sm text-light"></span>
+      </h2>
+      <span class="text-white mt-1" style="opacity: 0.9; font-size: 0.85rem; letter-spacing: 0.5px;">MATA PELAJARAN</span>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card glass-card p-4" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);">
+      <h6 class="text-white fw-bold mb-3"><i class="fa-solid fa-chart-line me-2"></i> Grafik Kehadiran Siswa</h6>
+      <div style="height: 200px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); border-radius: 10px;">
+        <p class="text-white text-center px-3 mb-0" style="opacity: 0.7; font-size: 0.85rem;">(Modul grafik akan aktif setelah fitur absensi selesai)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fungsi Animasi Counter Angka (Dari 0 ke target)
+  window.animateValue = function(id, start, end, duration) {
+    if (start === end) {
+      document.getElementById(id).innerHTML = end;
+      return;
+    }
+    let range = end - start;
+    let current = start;
+    let increment = end > start ? 1 : -1;
+    // Menghindari stepTime 0 atau infinity
+    let stepTime = Math.abs(Math.floor(duration / range));
+    if (stepTime === 0) stepTime = 10; 
+    
+    let obj = document.getElementById(id);
+    let timer = setInterval(function() {
+      current += increment;
+      obj.innerHTML = current;
+      if (current == end) {
+        clearInterval(timer);
+      }
+    }, stepTime);
+  };
+
+  // Mendaftarkan fungsi load ke global window
+  window.loadDashboardData = function() {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response && response.status === "success") {
+          // Ganti spinner dan jalankan animasi angka selama 1000ms (1 detik)
+          window.animateValue("stat-guru", 0, response.data.guru, 1000);
+          window.animateValue("stat-siswa", 0, response.data.siswa, 1000);
+          window.animateValue("stat-kelas", 0, response.data.kelas, 1000);
+          window.animateValue("stat-mapel", 0, response.data.mapel, 1000);
+        } else {
+          // Jika gagal, tampilkan angka 0
+          $('#stat-guru, #stat-siswa, #stat-kelas, #stat-mapel').text('0');
+        }
+      })
+      .withFailureHandler(function(error) {
+        $('#stat-guru, #stat-siswa, #stat-kelas, #stat-mapel').text('-');
+      })
+      .getDashboardStats(); 
+  };
+
+  // Langsung eksekusi pemuatan data saat elemen HTML selesai dimasukkan ke layar
+  window.loadDashboardData();
+</script>

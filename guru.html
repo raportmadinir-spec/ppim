@@ -1,0 +1,302 @@
+<!-- FILE: guru.html -->
+<style>
+  /* TEMA TABEL: MIDNIGHT FROST BLUE */
+  .table-glass-blue { border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15); width: 100%; }
+  .table-glass-blue thead th { background: rgba(15, 23, 42, 0.85) !important; color: #f8fafc !important; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; border-bottom: 2px solid rgba(255,255,255,0.1); padding: 15px; }
+  .table-glass-blue tbody td { background: rgba(30, 41, 59, 0.6) !important; color: #f1f5f9 !important; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 15px; vertical-align: middle; }
+  .table-glass-blue tbody tr:hover td { background: rgba(51, 65, 85, 0.8) !important; color: #ffffff !important; transition: 0.2s; }
+  
+  /* Desain Kolom Pencarian DataTables */
+  .dataTables_wrapper .dataTables_filter input { background: rgba(255,255,255,0.9) !important; border-radius: 8px; border: none; padding: 6px 12px; color: #000; outline: none; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .dataTables_wrapper .dataTables_filter label { color: rgba(255,255,255,0.9) !important; font-weight: 500; }
+  
+  /* Menyembunyikan elemen DataTables yang tidak diinginkan dengan CSS (Backup) */
+  .dataTables_length, .dataTables_info, .dataTables_paginate { display: none !important; }
+
+  /* TEMA MODAL BARU: LIGHT GLASSMORPHISM (PUTIH TERANG) */
+  .modal-glass-light { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); border-radius: 16px; color: #2c3e50; }
+  .modal-glass-light .form-control, .modal-glass-light .form-select { background: rgba(255, 255, 255, 0.8) !important; border: 1px solid rgba(0, 0, 0, 0.15) !important; color: #333 !important; font-weight: 500; }
+  .modal-glass-light .form-control:focus, .modal-glass-light .form-select:focus { background: #fff !important; box-shadow: 0 0 0 0.25rem rgba(14, 165, 233, 0.25) !important; border-color: #0ea5e9 !important; }
+</style>
+
+<div class="row mb-3 align-items-center">
+  <div class="col-md-6 text-center text-md-start">
+    <h4 class="text-glass fw-bold mb-1">Master Data Guru</h4>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.85rem;">Kelola data pendidik dan staf madrasah.</p>
+  </div>
+  <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+    <button class="btn btn-primary fw-bold shadow-sm rounded-pill px-4" onclick="window.bukaModalTambah()" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">
+      <i class="fa-solid fa-plus me-2"></i> Tambah Guru
+    </button>
+  </div>
+</div>
+
+<div class="card glass-card p-3 p-md-4 mb-5" style="background: rgba(255,255,255,0.05); border: none;">
+  <!-- Menghilangkan scroll horizontal agar tabel menyesuaikan layar HP -->
+  <div style="width: 100%;">
+    <table id="tabelGuru" class="table table-glass-blue">
+      <thead>
+        <tr>
+          <th width="5%" class="text-center">No</th>
+          <th width="45%">Nama Lengkap</th>
+          <!-- Kolom NIP, HP, dan Status disembunyikan di layar HP (d-none d-md-table-cell) -->
+          <th width="15%" class="d-none d-md-table-cell text-center">NIP</th>
+          <th width="15%" class="d-none d-md-table-cell text-center">No. HP</th>
+          <th width="10%" class="d-none d-md-table-cell text-center">Status</th>
+          <th width="10%" class="text-center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="data-guru-body">
+        <!-- Data akan diisi oleh JavaScript -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL FORM TAMBAH/EDIT GURU -->
+<div class="modal fade" id="modalGuru" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-dark" id="modalTitle">Tambah Guru</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.simpanDataGuru();">
+        <div class="modal-body">
+          <input type="hidden" id="id_guru">
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">NIP / Akses Login</label>
+            <input type="text" class="form-control px-3 py-2" id="nip" required placeholder="Masukkan NIP">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Nama Lengkap</label>
+            <input type="text" class="form-control px-3 py-2" id="nama_lengkap" required placeholder="Gelar & Nama Lengkap">
+          </div>
+          <div class="row">
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Jenis Kelamin</label>
+              <select class="form-select px-3 py-2" id="jk" required>
+                <option value="">Pilih...</option>
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+              </select>
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Nomor HP</label>
+              <input type="number" class="form-control px-3 py-2" id="no_hp" required placeholder="08...">
+            </div>
+          </div>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="is_active" checked style="cursor: pointer;">
+            <label class="form-check-label ms-2 fw-medium text-dark" for="is_active" style="cursor: pointer;">Status Aktif Mengajar</label>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-light border shadow-sm rounded-pill px-4 text-dark fw-medium" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4 fw-bold" id="btnSimpanGuru" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL GURU -->
+<div class="modal fade" id="modalDetail" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25 py-3">
+        <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-id-card-clip me-2 text-primary"></i>Detail Guru</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" style="font-size: 0.75rem;"></button>
+      </div>
+      <div class="modal-body pb-2">
+        <table class="table table-borderless table-sm mb-0 text-dark" style="font-size: 0.95rem;">
+          <tr><td width="35%" class="text-secondary fw-semibold">NIP</td><td width="5%">:</td><td id="det-nip" class="fw-bold text-primary"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Nama</td><td>:</td><td id="det-nama" class="fw-bold"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Kelamin</td><td>:</td><td id="det-jk"></td></tr>
+          <tr><td class="text-secondary fw-semibold">No. HP</td><td>:</td><td id="det-hp"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Status</td><td>:</td><td id="det-status"></td></tr>
+        </table>
+      </div>
+      <div class="modal-footer border-top border-secondary border-opacity-25 justify-content-between p-2">
+        <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm" onclick="window.editDariDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button type="button" class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="window.hapusDariDetail()"><i class="fa-solid fa-trash"></i> Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.globalGuruData = []; 
+  window.selectedDetailId = null;
+
+  // Trik SPA untuk memindahkan modal agar tidak terhalang layar hitam (backdrop)
+  $('.modal-guru-wrapper').remove(); 
+  const modalWrapper = document.createElement('div');
+  modalWrapper.className = 'modal-guru-wrapper';
+  modalWrapper.appendChild(document.getElementById('modalGuru'));
+  modalWrapper.appendChild(document.getElementById('modalDetail'));
+  document.body.appendChild(modalWrapper);
+
+  window.loadTabelGuru = function() {
+    // Tampilkan pesan loading di tabel sebelum data tiba
+    document.getElementById('data-guru-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-white-50"><div class="spinner-border text-info spinner-border-sm me-2"></div> Memuat data...</td></tr>';
+    
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.status === "success") {
+          window.globalGuruData = response.data;
+          window.renderTabel(window.globalGuruData);
+        } else {
+          Swal.fire('Error DB', response.message, 'error');
+        }
+      })
+      .getGuruList();
+  };
+
+  window.renderTabel = function(data) {
+    if ($.fn.DataTable.isDataTable('#tabelGuru')) {
+      $('#tabelGuru').DataTable().destroy();
+    }
+    
+    let html = '';
+    data.forEach((guru, index) => {
+      let statusBadge = (guru.is_active === true || guru.is_active === "TRUE") 
+                        ? '<span class="badge bg-success shadow-sm rounded-pill px-3">Aktif</span>' 
+                        : '<span class="badge bg-danger shadow-sm rounded-pill px-3">Nonaktif</span>';
+      
+      html += `<tr>
+        <td class="text-center fw-medium">${index + 1}</td>
+        <td class="fw-bold">${guru.nama_lengkap}</td>
+        
+        <!-- Kolom-kolom ini akan menghilang di layar HP (d-none d-md-table-cell) -->
+        <td class="text-center d-none d-md-table-cell" style="color: #94a3b8;">${guru.nip}</td>
+        <td class="text-center d-none d-md-table-cell fw-medium">${guru.no_hp}</td>
+        <td class="text-center d-none d-md-table-cell">${statusBadge}</td>
+        
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-info shadow-none rounded-pill px-3 fw-medium" onclick="window.bukaDetail('${guru.id_guru}')">
+            <i class="fa-solid fa-eye"></i> Detail
+          </button>
+        </td>
+      </tr>`;
+    });
+
+    document.getElementById('data-guru-body').innerHTML = html;
+    
+    // Inisialisasi DataTables dengan mematikan fungsi Paginasi dan Info sesuai permintaan
+    $('#tabelGuru').DataTable({
+      language: { 
+        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json',
+        emptyTable: "Belum ada data guru. Silakan klik Tambah Guru.",
+        search: "Pencarian Cepat:"
+      },
+      ordering: false,
+      paging: false,        // Menghilangkan fungsi pagination (Sebelumnya / Selanjutnya)
+      info: false,          // Menghilangkan teks (Menampilkan 1 sampai...)
+      lengthChange: false   // Menghilangkan dropdown (Tampilkan 10 entri)
+    });
+  };
+
+  window.bukaModalTambah = function() {
+    document.getElementById('id_guru').value = '';
+    document.getElementById('nip').value = '';
+    document.getElementById('nama_lengkap').value = '';
+    document.getElementById('jk').value = '';
+    document.getElementById('no_hp').value = '';
+    document.getElementById('modalTitle').innerText = 'Tambah Guru Baru';
+    document.getElementById('is_active').checked = true;
+    new bootstrap.Modal(document.getElementById('modalGuru')).show();
+  };
+
+  window.bukaDetail = function(id) {
+    const guru = window.globalGuruData.find(g => g.id_guru === id);
+    if(guru) {
+      window.selectedDetailId = id;
+      document.getElementById('det-nip').innerText = guru.nip;
+      document.getElementById('det-nama').innerText = guru.nama_lengkap;
+      document.getElementById('det-jk').innerText = guru.jk === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)';
+      document.getElementById('det-hp').innerText = guru.no_hp;
+      document.getElementById('det-status').innerHTML = (guru.is_active === true || guru.is_active === "TRUE") ? '<span class="badge bg-success shadow-sm rounded-pill px-2">Aktif</span>' : '<span class="badge bg-danger shadow-sm rounded-pill px-2">Nonaktif</span>';
+      new bootstrap.Modal(document.getElementById('modalDetail')).show();
+    }
+  };
+
+  window.editDariDetail = function() {
+    const modalEl = document.getElementById('modalDetail');
+    bootstrap.Modal.getInstance(modalEl).hide();
+    
+    setTimeout(() => {
+      const guru = window.globalGuruData.find(g => g.id_guru === window.selectedDetailId);
+      if(guru) {
+        document.getElementById('id_guru').value = guru.id_guru;
+        document.getElementById('nip').value = guru.nip;
+        document.getElementById('nama_lengkap').value = guru.nama_lengkap;
+        document.getElementById('jk').value = guru.jk;
+        document.getElementById('no_hp').value = guru.no_hp;
+        document.getElementById('is_active').checked = (guru.is_active === true || guru.is_active === "TRUE");
+        document.getElementById('modalTitle').innerText = 'Edit Data Guru';
+        new bootstrap.Modal(document.getElementById('modalGuru')).show();
+      }
+    }, 400); 
+  };
+
+  window.hapusDariDetail = function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalDetail')).hide();
+    setTimeout(() => {
+      const guru = window.globalGuruData.find(g => g.id_guru === window.selectedDetailId);
+      window.hapusGuru(window.selectedDetailId, guru.nama_lengkap);
+    }, 400);
+  };
+
+  window.simpanDataGuru = function() {
+    const btn = document.getElementById('btnSimpanGuru');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Proses...';
+    btn.disabled = true;
+
+    const dataObj = {
+      id_guru: document.getElementById('id_guru').value,
+      nip: document.getElementById('nip').value,
+      nama_lengkap: document.getElementById('nama_lengkap').value,
+      jk: document.getElementById('jk').value,
+      no_hp: document.getElementById('no_hp').value,
+      is_active: document.getElementById('is_active').checked
+    };
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.innerHTML = 'Simpan Data';
+        btn.disabled = false;
+        if(res.status === "success") {
+          bootstrap.Modal.getInstance(document.getElementById('modalGuru')).hide();
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
+          window.loadTabelGuru(); 
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      })
+      .saveGuru(dataObj);
+  };
+
+  window.hapusGuru = function(id, nama) {
+    Swal.fire({
+      title: 'Hapus Guru?', text: `Anda yakin ingin menghapus data ${nama}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Ya, Hapus!', background: 'rgba(255, 255, 255, 0.95)', color: '#333', backdrop: 'rgba(0,0,0,0.5)'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if(res.status === "success") {
+              Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+              window.loadTabelGuru();
+            } else {
+              Swal.fire('Error', res.message, 'error');
+            }
+          })
+          .deleteGuru(id);
+      }
+    });
+  };
+
+  // Muat data saat pertama kali file html dirender
+  window.loadTabelGuru();
+</script>

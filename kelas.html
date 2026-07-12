@@ -1,0 +1,302 @@
+<!-- FILE: kelas.html -->
+<style>
+  .table-glass-blue { border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15); width: 100%; }
+  .table-glass-blue thead th { background: rgba(15, 23, 42, 0.85) !important; color: #f8fafc !important; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; border-bottom: 2px solid rgba(255,255,255,0.1); padding: 15px; }
+  .table-glass-blue tbody td { background: rgba(30, 41, 59, 0.6) !important; color: #f1f5f9 !important; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 15px; vertical-align: middle; }
+  .table-glass-blue tbody tr:hover td { background: rgba(51, 65, 85, 0.8) !important; color: #ffffff !important; transition: 0.2s; }
+  
+  .dataTables_wrapper .dataTables_filter input { background: rgba(255,255,255,0.9) !important; border-radius: 8px; border: none; padding: 6px 12px; color: #000; outline: none; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .dataTables_wrapper .dataTables_filter label { color: rgba(255,255,255,0.9) !important; font-weight: 500; }
+  .dataTables_length, .dataTables_info, .dataTables_paginate { display: none !important; }
+  .modal-glass-light { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); border-radius: 16px; color: #2c3e50; }
+  .modal-glass-light .form-control, .modal-glass-light .form-select { background: rgba(255, 255, 255, 0.8) !important; border: 1px solid rgba(0, 0, 0, 0.15) !important; color: #333 !important; font-weight: 500; }
+</style>
+<div class="row mb-3 align-items-center">
+  <div class="col-md-6 text-center text-md-start">
+    <h4 class="text-glass fw-bold mb-1">Master Data Kelas</h4>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.85rem;">Kelola rombongan belajar (Rombel).</p>
+  </div>
+  <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+    <button class="btn btn-primary fw-bold shadow-sm rounded-pill px-4" onclick="window.bukaModalTambahKelas()" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">
+      <i class="fa-solid fa-plus me-2"></i> Tambah Kelas
+    </button>
+  </div>
+</div>
+<div class="card glass-card p-3 p-md-4 mb-5" style="background: rgba(255,255,255,0.05); border: none;">
+  <div style="width: 100%;">
+    <table id="tabelKelas" class="table table-glass-blue">
+      <thead>
+        <tr>
+          <th width="5%" class="text-center">No</th>
+          <th width="35%">Nama Kelas</th>
+          <th width="15%" class="text-center">Tingkat</th>
+          <th width="25%" class="d-none d-md-table-cell">Wali Kelas</th>
+          <th width="10%" class="d-none d-md-table-cell text-center">Status</th>
+          <th width="10%" class="text-center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="data-kelas-body">
+        <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- MODAL FORM TAMBAH/EDIT KELAS -->
+<div class="modal fade" id="modalKelas" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-dark" id="modalTitleKelas">Tambah Kelas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.simpanDataKelas();">
+        <div class="modal-body">
+          <input type="hidden" id="id_kelas">
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Nama Kelas / Rombel</label>
+            <input type="text" class="form-control px-3 py-2" id="nama_kelas" required placeholder="Contoh: 1A / Ula A">
+          </div>
+          
+          <!-- Revisi 1: Tingkat Pendidikan menjadi Input Text -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Tingkat Pendidikan</label>
+            <input type="text" class="form-control px-3 py-2" id="tingkat" required placeholder="Contoh: 1 / 2 / Ula / Wustha">
+          </div>
+          <!-- Revisi 2: Wali Kelas menjadi Select Data Guru -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Wali Kelas</label>
+            <select class="form-select px-3 py-2" id="wali_kelas">
+              <option value="">-- Pilih Wali Kelas (Opsional) --</option>
+              <!-- Diisi oleh JavaScript (Hanya guru yang belum jadi wali kelas di kelas lain) -->
+            </select>
+          </div>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="is_active_kelas" checked style="cursor: pointer;">
+            <label class="form-check-label ms-2 fw-medium text-dark" for="is_active_kelas" style="cursor: pointer;">Status Kelas Aktif</label>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-light border shadow-sm rounded-pill px-4 text-dark fw-medium" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4 fw-bold" id="btnSimpanKelas" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- MODAL DETAIL KELAS -->
+<div class="modal fade" id="modalDetailKelas" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25 py-3">
+        <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-school me-2 text-primary"></i>Detail Kelas</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" style="font-size: 0.75rem;"></button>
+      </div>
+      <div class="modal-body pb-2">
+        <table class="table table-borderless table-sm mb-0 text-dark" style="font-size: 0.95rem;">
+          <tr><td width="35%" class="text-secondary fw-semibold">Nama</td><td width="5%">:</td><td id="det-nama-kelas" class="fw-bold text-primary"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Tingkat</td><td>:</td><td id="det-tingkat"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Wali Kelas</td><td>:</td><td id="det-wali"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Status</td><td>:</td><td id="det-status-kelas"></td></tr>
+        </table>
+      </div>
+      <div class="modal-footer border-top border-secondary border-opacity-25 justify-content-between p-2">
+        <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm" onclick="window.editDariDetailKelas()"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button type="button" class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="window.hapusDariDetailKelas()"><i class="fa-solid fa-trash"></i> Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  window.globalKelasData = []; 
+  window.globalDataGuru = []; // Menyimpan data guru untuk dropdown
+  window.selectedKelasId = null;
+  $('.modal-kelas-wrapper').remove(); 
+  const modalWrapKelas = document.createElement('div');
+  modalWrapKelas.className = 'modal-kelas-wrapper';
+  modalWrapKelas.appendChild(document.getElementById('modalKelas'));
+  modalWrapKelas.appendChild(document.getElementById('modalDetailKelas'));
+  document.body.appendChild(modalWrapKelas);
+  
+  window.loadTabelKelas = function() {
+    document.getElementById('data-kelas-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-white-50"><div class="spinner-border text-info spinner-border-sm me-2"></div> Memuat data...</td></tr>';
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.status === "success") {
+          window.globalKelasData = response.dataKelas;
+          window.globalDataGuru = response.dataGuru;
+          window.renderTabelKelas(window.globalKelasData);
+        } else {
+          Swal.fire('Error DB', response.message, 'error');
+        }
+      })
+      .getKelasInit();
+  };
+  
+  // Fungsi untuk mendapatkan nama guru dari ID
+  window.getNamaGuru = function(id_guru) {
+    if(!id_guru) return '-';
+    const guru = window.globalDataGuru.find(g => g.id_guru === id_guru);
+    return guru ? guru.nama_lengkap : '-';
+  };
+  
+  // Fungsi khusus untuk mengisi dropdown Wali Kelas (Menyembunyikan guru yang sudah terpakai)
+  window.populateDropdownGuru = function(currentWaliId = null) {
+    const select = document.getElementById('wali_kelas');
+    let html = '<option value="">-- Pilih Wali Kelas (Opsional) --</option>';
+    
+    // Kumpulkan semua ID guru yang SUDAH MENJADI wali kelas di kelas aktif lainnya
+    const usedGuruIds = window.globalKelasData
+      .filter(k => k.is_active === "TRUE" || k.is_active === true || k.is_active === "true")
+      .map(k => k.wali_kelas)
+      .filter(id => id && id !== currentWaliId); // Kecualikan ID guru kelas ini sendiri jika sedang di-edit
+      
+    window.globalDataGuru.forEach(guru => {
+      // Jika guru ini tidak ada di daftar yang terpakai, tampilkan!
+      if (!usedGuruIds.includes(guru.id_guru)) {
+        html += `<option value="${guru.id_guru}">${guru.nama_lengkap}</option>`;
+      }
+    });
+    
+    select.innerHTML = html;
+    
+    // Set value yang terpilih jika sedang Edit
+    if(currentWaliId) select.value = currentWaliId;
+  };
+  
+  window.renderTabelKelas = function(data) {
+    if ($.fn.DataTable.isDataTable('#tabelKelas')) {
+      $('#tabelKelas').DataTable().destroy();
+    }
+    
+    let html = '';
+    data.forEach((kelas, index) => {
+      let statusBadge = (kelas.is_active === true || kelas.is_active === "TRUE" || kelas.is_active === "true") 
+                        ? '<span class="badge bg-success shadow-sm rounded-pill px-3">Aktif</span>' 
+                        : '<span class="badge bg-danger shadow-sm rounded-pill px-3">Nonaktif</span>';
+      
+      let namaWali = window.getNamaGuru(kelas.wali_kelas);
+      html += `<tr>
+        <td class="text-center fw-medium">${index + 1}</td>
+        <td class="fw-bold">${kelas.nama_kelas}</td>
+        <td class="text-center fw-medium">${kelas.tingkat}</td>
+        <td class="d-none d-md-table-cell" style="color: #94a3b8;">${namaWali}</td>
+        <td class="text-center d-none d-md-table-cell">${statusBadge}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-info shadow-none rounded-pill px-3 fw-medium" onclick="window.bukaDetailKelas('${kelas.id_kelas}')">
+            <i class="fa-solid fa-eye"></i> Detail
+          </button>
+        </td>
+      </tr>`;
+    });
+    document.getElementById('data-kelas-body').innerHTML = html;
+    
+    $('#tabelKelas').DataTable({
+      language: { 
+        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json',
+        emptyTable: "Belum ada data kelas.", search: "Cari Kelas:"
+      },
+      ordering: false, paging: false, info: false, lengthChange: false
+    });
+  };
+  
+  window.bukaModalTambahKelas = function() {
+    document.getElementById('id_kelas').value = '';
+    document.getElementById('nama_kelas').value = '';
+    document.getElementById('tingkat').value = '';
+    document.getElementById('modalTitleKelas').innerText = 'Tambah Kelas Baru';
+    document.getElementById('is_active_kelas').checked = true;
+    
+    // Render dropdown (kosongkan wali terpilih)
+    window.populateDropdownGuru(null);
+    
+    new bootstrap.Modal(document.getElementById('modalKelas')).show();
+  };
+  
+  window.bukaDetailKelas = function(id) {
+    const kelas = window.globalKelasData.find(k => k.id_kelas === id);
+    if(kelas) {
+      window.selectedKelasId = id;
+      document.getElementById('det-nama-kelas').innerText = kelas.nama_kelas;
+      document.getElementById('det-tingkat').innerText = kelas.tingkat;
+      document.getElementById('det-wali').innerText = window.getNamaGuru(kelas.wali_kelas);
+      document.getElementById('det-status-kelas').innerHTML = (kelas.is_active === true || kelas.is_active === "TRUE" || kelas.is_active === "true") ? '<span class="badge bg-success shadow-sm rounded-pill px-2">Aktif</span>' : '<span class="badge bg-danger shadow-sm rounded-pill px-2">Nonaktif</span>';
+      
+      new bootstrap.Modal(document.getElementById('modalDetailKelas')).show();
+    }
+  };
+  
+  window.editDariDetailKelas = function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalDetailKelas')).hide();
+    setTimeout(() => {
+      const kelas = window.globalKelasData.find(k => k.id_kelas === window.selectedKelasId);
+      if(kelas) {
+        document.getElementById('id_kelas').value = kelas.id_kelas;
+        document.getElementById('nama_kelas').value = kelas.nama_kelas;
+        document.getElementById('tingkat').value = kelas.tingkat;
+        document.getElementById('is_active_kelas').checked = (kelas.is_active === true || kelas.is_active === "TRUE" || kelas.is_active === "true");
+        document.getElementById('modalTitleKelas').innerText = 'Edit Data Kelas';
+        
+        // Render dropdown (Izinkan wali kelas yg saat ini menjabat tetap bisa dipilih)
+        window.populateDropdownGuru(kelas.wali_kelas);
+        new bootstrap.Modal(document.getElementById('modalKelas')).show();
+      }
+    }, 400); 
+  };
+  
+  window.hapusDariDetailKelas = function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalDetailKelas')).hide();
+    setTimeout(() => {
+      const kelas = window.globalKelasData.find(k => k.id_kelas === window.selectedKelasId);
+      window.hapusKelas(window.selectedKelasId, kelas.nama_kelas);
+    }, 400);
+  };
+  
+  window.simpanDataKelas = function() {
+    const btn = document.getElementById('btnSimpanKelas');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Proses...';
+    btn.disabled = true;
+    const dataObj = {
+      id_kelas: document.getElementById('id_kelas').value,
+      nama_kelas: document.getElementById('nama_kelas').value,
+      tingkat: document.getElementById('tingkat').value,
+      wali_kelas: document.getElementById('wali_kelas').value,
+      is_active: document.getElementById('is_active_kelas').checked
+    };
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.innerHTML = 'Simpan Data';
+        btn.disabled = false;
+        if(res.status === "success") {
+          bootstrap.Modal.getInstance(document.getElementById('modalKelas')).hide();
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
+          window.loadTabelKelas(); 
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      })
+      .saveKelas(dataObj);
+  };
+  
+  window.hapusKelas = function(id, nama) {
+    Swal.fire({
+      title: 'Hapus Kelas?', text: `Yakin menghapus ${nama}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Ya, Hapus!', background: 'rgba(255, 255, 255, 0.95)', color: '#333'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if(res.status === "success") {
+              Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+              window.loadTabelKelas();
+            } else {
+              Swal.fire('Error', res.message, 'error');
+            }
+          })
+          .deleteKelas(id);
+      }
+    });
+  };
+  
+  window.loadTabelKelas();
+</script>

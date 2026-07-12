@@ -1,0 +1,262 @@
+<!-- FILE: mapel.html -->
+<style>
+  .table-glass-blue { border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15); width: 100%; }
+  .table-glass-blue thead th { background: rgba(15, 23, 42, 0.85) !important; color: #f8fafc !important; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; border-bottom: 2px solid rgba(255,255,255,0.1); padding: 15px; }
+  .table-glass-blue tbody td { background: rgba(30, 41, 59, 0.6) !important; color: #f1f5f9 !important; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 15px; vertical-align: middle; }
+  .table-glass-blue tbody tr:hover td { background: rgba(51, 65, 85, 0.8) !important; color: #ffffff !important; transition: 0.2s; }
+  
+  .dataTables_wrapper .dataTables_filter input { background: rgba(255,255,255,0.9) !important; border-radius: 8px; border: none; padding: 6px 12px; color: #000; outline: none; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .dataTables_wrapper .dataTables_filter label { color: rgba(255,255,255,0.9) !important; font-weight: 500; }
+  .dataTables_length, .dataTables_info, .dataTables_paginate { display: none !important; }
+  .modal-glass-light { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); border-radius: 16px; color: #2c3e50; }
+  .modal-glass-light .form-control { background: rgba(255, 255, 255, 0.8) !important; border: 1px solid rgba(0, 0, 0, 0.15) !important; color: #333 !important; font-weight: 500; }
+  .modal-glass-light .form-control:focus { background: #fff !important; box-shadow: 0 0 0 0.25rem rgba(14, 165, 233, 0.25) !important; border-color: #0ea5e9 !important; }
+</style>
+<div class="row mb-3 align-items-center">
+  <div class="col-md-6 text-center text-md-start">
+    <h4 class="text-glass fw-bold mb-1">Data Mata Pelajaran</h4>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.85rem;">Kelola mata pelajaran dan batas ketuntasan (KKM).</p>
+  </div>
+  <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+    <button class="btn btn-primary fw-bold shadow-sm rounded-pill px-4" onclick="window.bukaModalTambahMapel()" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">
+      <i class="fa-solid fa-plus me-2"></i> Tambah Mapel
+    </button>
+  </div>
+</div>
+<div class="card glass-card p-3 p-md-4 mb-5" style="background: rgba(255,255,255,0.05); border: none;">
+  <div style="width: 100%;">
+    <table id="tabelMapel" class="table table-glass-blue">
+      <thead>
+        <tr>
+          <th width="5%" class="text-center">No</th>
+          <th width="15%" class="d-none d-md-table-cell text-center">Kode</th>
+          <th width="45%">Nama Mata Pelajaran</th>
+          <th width="10%" class="d-none d-md-table-cell text-center">KKM</th>
+          <th width="10%" class="d-none d-md-table-cell text-center">Status</th>
+          <th width="15%" class="text-center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="data-mapel-body">
+        <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- MODAL FORM TAMBAH/EDIT MAPEL -->
+<div class="modal fade" id="modalMapel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-dark" id="modalTitleMapel">Tambah Mapel</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.simpanDataMapel();">
+        <div class="modal-body">
+          <input type="hidden" id="id_mapel">
+          
+          <div class="row">
+            <div class="col-md-5 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Kode Mapel</label>
+              <input type="text" class="form-control px-3 py-2 text-uppercase" id="kode_mapel" required placeholder="Contoh: FIQ">
+            </div>
+            <div class="col-md-7 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">KKM (Kriteria Ketuntasan)</label>
+              <input type="number" class="form-control px-3 py-2" id="kkm" required placeholder="Contoh: 70" min="0" max="100">
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Nama Mata Pelajaran</label>
+            <input type="text" class="form-control px-3 py-2" id="nama_mapel" required placeholder="Contoh: Fiqih Ibadah">
+          </div>
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="is_active_mapel" checked style="cursor: pointer;">
+            <label class="form-check-label ms-2 fw-medium text-dark" for="is_active_mapel" style="cursor: pointer;">Status Mapel Aktif</label>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-light border shadow-sm rounded-pill px-4 text-dark fw-medium" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4 fw-bold" id="btnSimpanMapel" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- MODAL DETAIL MAPEL -->
+<div class="modal fade" id="modalDetailMapel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25 py-3">
+        <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-book-open me-2 text-primary"></i>Detail Mapel</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" style="font-size: 0.75rem;"></button>
+      </div>
+      <div class="modal-body pb-2">
+        <table class="table table-borderless table-sm mb-0 text-dark" style="font-size: 0.95rem;">
+          <tr><td width="35%" class="text-secondary fw-semibold">Kode</td><td width="5%">:</td><td id="det-kode-mapel" class="fw-bold text-primary"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Nama</td><td>:</td><td id="det-nama-mapel" class="fw-bold"></td></tr>
+          <tr><td class="text-secondary fw-semibold">KKM</td><td>:</td><td id="det-kkm"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Status</td><td>:</td><td id="det-status-mapel"></td></tr>
+        </table>
+      </div>
+      <div class="modal-footer border-top border-secondary border-opacity-25 justify-content-between p-2">
+        <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm" onclick="window.editDariDetailMapel()"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button type="button" class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="window.hapusDariDetailMapel()"><i class="fa-solid fa-trash"></i> Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  window.globalMapelData = []; 
+  window.selectedMapelId = null;
+  $('.modal-mapel-wrapper').remove(); 
+  const modalWrapMapel = document.createElement('div');
+  modalWrapMapel.className = 'modal-mapel-wrapper';
+  modalWrapMapel.appendChild(document.getElementById('modalMapel'));
+  modalWrapMapel.appendChild(document.getElementById('modalDetailMapel'));
+  document.body.appendChild(modalWrapMapel);
+  
+  window.loadTabelMapel = function() {
+    document.getElementById('data-mapel-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-white-50"><div class="spinner-border text-info spinner-border-sm me-2"></div> Memuat data...</td></tr>';
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.status === "success") {
+          window.globalMapelData = response.data;
+          window.renderTabelMapel(window.globalMapelData);
+        } else {
+          Swal.fire('Error DB', response.message, 'error');
+        }
+      })
+      .getMapelList();
+  };
+  
+  window.renderTabelMapel = function(data) {
+    if ($.fn.DataTable.isDataTable('#tabelMapel')) {
+      $('#tabelMapel').DataTable().destroy();
+    }
+    
+    let html = '';
+    data.forEach((mapel, index) => {
+      let statusBadge = (mapel.is_active === true || mapel.is_active === "TRUE" || mapel.is_active === "true") 
+                        ? '<span class="badge bg-success shadow-sm rounded-pill px-3">Aktif</span>' 
+                        : '<span class="badge bg-danger shadow-sm rounded-pill px-3">Nonaktif</span>';
+      
+      html += `<tr>
+        <td class="text-center fw-medium">${index + 1}</td>
+        <td class="text-center fw-bold text-info d-none d-md-table-cell">${mapel.kode_mapel}</td>
+        <td class="fw-bold">${mapel.nama_mapel}</td>
+        <td class="text-center d-none d-md-table-cell fw-medium">${mapel.kkm || '-'}</td>
+        <td class="text-center d-none d-md-table-cell">${statusBadge}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-info shadow-none rounded-pill px-3 fw-medium" onclick="window.bukaDetailMapel('${mapel.id_mapel}')">
+            <i class="fa-solid fa-eye"></i> Detail
+          </button>
+        </td>
+      </tr>`;
+    });
+    document.getElementById('data-mapel-body').innerHTML = html;
+    
+    $('#tabelMapel').DataTable({
+      language: { 
+        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json',
+        emptyTable: "Belum ada data mapel.", search: "Cari Mapel:"
+      },
+      ordering: false, paging: false, info: false, lengthChange: false
+    });
+  };
+  
+  window.bukaModalTambahMapel = function() {
+    document.getElementById('id_mapel').value = '';
+    document.getElementById('kode_mapel').value = '';
+    document.getElementById('nama_mapel').value = '';
+    document.getElementById('kkm').value = '';
+    document.getElementById('modalTitleMapel').innerText = 'Tambah Mata Pelajaran';
+    document.getElementById('is_active_mapel').checked = true;
+    new bootstrap.Modal(document.getElementById('modalMapel')).show();
+  };
+  
+  window.bukaDetailMapel = function(id) {
+    const mapel = window.globalMapelData.find(m => m.id_mapel === id);
+    if(mapel) {
+      window.selectedMapelId = id;
+      document.getElementById('det-kode-mapel').innerText = mapel.kode_mapel;
+      document.getElementById('det-nama-mapel').innerText = mapel.nama_mapel;
+      document.getElementById('det-kkm').innerText = mapel.kkm;
+      document.getElementById('det-status-mapel').innerHTML = (mapel.is_active === true || mapel.is_active === "TRUE" || mapel.is_active === "true") ? '<span class="badge bg-success shadow-sm rounded-pill px-2">Aktif</span>' : '<span class="badge bg-danger shadow-sm rounded-pill px-2">Nonaktif</span>';
+      
+      new bootstrap.Modal(document.getElementById('modalDetailMapel')).show();
+    }
+  };
+  
+  window.editDariDetailMapel = function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalDetailMapel')).hide();
+    setTimeout(() => {
+      const mapel = window.globalMapelData.find(m => m.id_mapel === window.selectedMapelId);
+      if(mapel) {
+        document.getElementById('id_mapel').value = mapel.id_mapel;
+        document.getElementById('kode_mapel').value = mapel.kode_mapel;
+        document.getElementById('nama_mapel').value = mapel.nama_mapel;
+        document.getElementById('kkm').value = mapel.kkm;
+        document.getElementById('is_active_mapel').checked = (mapel.is_active === true || mapel.is_active === "TRUE" || mapel.is_active === "true");
+        
+        document.getElementById('modalTitleMapel').innerText = 'Edit Data Mapel';
+        new bootstrap.Modal(document.getElementById('modalMapel')).show();
+      }
+    }, 400); 
+  };
+  
+  window.hapusDariDetailMapel = function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalDetailMapel')).hide();
+    setTimeout(() => {
+      const mapel = window.globalMapelData.find(m => m.id_mapel === window.selectedMapelId);
+      window.hapusMapel(window.selectedMapelId, mapel.nama_mapel);
+    }, 400);
+  };
+  
+  window.simpanDataMapel = function() {
+    const btn = document.getElementById('btnSimpanMapel');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Proses...';
+    btn.disabled = true;
+    const dataObj = {
+      id_mapel: document.getElementById('id_mapel').value,
+      kode_mapel: document.getElementById('kode_mapel').value,
+      nama_mapel: document.getElementById('nama_mapel').value,
+      kkm: document.getElementById('kkm').value,
+      is_active: document.getElementById('is_active_mapel').checked
+    };
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.innerHTML = 'Simpan Data';
+        btn.disabled = false;
+        if(res.status === "success") {
+          bootstrap.Modal.getInstance(document.getElementById('modalMapel')).hide();
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
+          window.loadTabelMapel(); 
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      })
+      .saveMapel(dataObj);
+  };
+  
+  window.hapusMapel = function(id, nama) {
+    Swal.fire({
+      title: 'Hapus Mapel?', text: `Yakin menghapus mapel ${nama}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Ya, Hapus!', background: 'rgba(255, 255, 255, 0.95)', color: '#333'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if(res.status === "success") {
+              Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+              window.loadTabelMapel();
+            } else {
+              Swal.fire('Error', res.message, 'error');
+            }
+          })
+          .deleteMapel(id);
+      }
+    });
+  };
+  
+  window.loadTabelMapel();
+</script>

@@ -1,0 +1,217 @@
+// ==========================================
+// FILE: PlotJadwal.js
+// FUNGSI: Modul Plotting Guru ke Mata Pelajaran
+// ==========================================
+function getInitPlotJadwal() {
+  try {
+    const sheetKelas = DB.getSheet('mst_kelas');
+    const dataKelasRaw = sheetKelas.getDataRange().getDisplayValues();
+    const headKelas = dataKelasRaw.length > 0 ? dataKelasRaw[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_')) : [];
+    let kelasList = [];
+    for(let i=1; i<dataKelasRaw.length; i++) {
+      let obj = {};
+      headKelas.forEach((h, idx) => obj[h] = dataKelasRaw[i][idx]);
+      if((obj.deleted_at === "" || !obj.deleted_at) && (obj.is_active === 'TRUE' || obj.is_active === true)) {
+        kelasList.push({ id_kelas: obj.id_kelas, nama_kelas: obj.nama_kelas, tingkat: obj.tingkat });
+      }
+    }
+    const sheetMapel = DB.getSheet('mst_mapel');
+    const dataMapelRaw = sheetMapel.getDataRange().getDisplayValues();
+    const headMapel = dataMapelRaw.length > 0 ? dataMapelRaw[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_')) : [];
+    let mapelList = [];
+    for(let i=1; i<dataMapelRaw.length; i++) {
+      let obj = {};
+      headMapel.forEach((h, idx) => obj[h] = dataMapelRaw[i][idx]);
+      if((obj.deleted_at === "" || !obj.deleted_at) && (obj.is_active === 'TRUE' || obj.is_active === true)) {
+        mapelList.push({ id_mapel: obj.id_mapel, kode_mapel: obj.kode_mapel, nama_mapel: obj.nama_mapel });
+      }
+    }
+    const sheetGuru = DB.getSheet('mst_guru');
+    const dataGuruRaw = sheetGuru.getDataRange().getDisplayValues();
+    const headGuru = dataGuruRaw.length > 0 ? dataGuruRaw[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_')) : [];
+    let guruList = [];
+    for(let i=1; i<dataGuruRaw.length; i++) {
+      let obj = {};
+      headGuru.forEach((h, idx) => obj[h] = dataGuruRaw[i][idx]);
+      if((obj.deleted_at === "" || !obj.deleted_at) && (obj.is_active === 'TRUE' || obj.is_active === true)) {
+        guruList.push({ id_guru: obj.id_guru, nama_lengkap: obj.nama_lengkap });
+      }
+    }
+    return { status: "success", kelas: kelasList, mapel: mapelList, guru: guruList };
+  } catch(e) { return { status: "error", message: e.toString() }; }
+}
+
+function getJadwalByKelas(id_tapel, id_kelas) {
+  try {
+    const sheet = DB.getSheet('trx_jadwal_mengajar');
+    let allData = sheet.getDataRange().getDisplayValues();
+    
+    if(allData.length === 0 || allData[0].length < 5) {
+      sheet.getRange(1, 1, 1, 5).setValues([['id_jadwal', 'id_tapel', 'id_kelas', 'id_mapel', 'id_guru']]);
+      allData = sheet.getDataRange().getDisplayValues();
+    }
+    const headers = allData[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+    const idxTapel = headers.indexOf('id_tapel');
+    const idxKelas = headers.indexOf('id_kelas');
+    const idxMapel = headers.indexOf('id_mapel');
+    const idxGuru = headers.indexOf('id_guru');
+    let jadwalPlot = {};
+    if(idxTapel > -1 && idxKelas > -1) {
+      for(let i=1; i<allData.length; i++) {
+        if(allData[i][idxTapel].toString().trim() === id_tapel.toString().trim() && 
+           allData[i][idxKelas].toString().trim() === id_kelas.toString().trim()) {
+           jadwalPlot[allData[i][idxMapel].toString().trim()] = allData[i][idxGuru].toString().trim();
+        }
+      }
+    }
+    
+    return { status: "success", data: jadwalPlot };
+  } catch(e) { return { status: "error", message: e.toString() }; }
+}
+
+function savePlottingJadwal(id_tapel, id_kelas, arr_jadwal) {
+  try {
+    const sheet = DB.getSheet('trx_jadwal_mengajar');
+    let allData = sheet.getDataRange().getValues();
+    
+    if (allData.length === 0 || allData[0].length < 5) {
+      sheet.getRange(1, 1, 1, 5).setValues([['id_jadwal', 'id_tapel', 'id_kelas', 'id_mapel', 'id_guru']]);
+      allData = sheet.getDataRange().getValues();
+    }
+    let headers = allData[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+    let idxId = headers.indexOf('id_jadwal');
+    let idxTapel = headers.indexOf('id_tapel');
+    let idxKelas = headers.indexOf('id_kelas');
+    let idxMapel = headers.indexOf('id_mapel');
+    let idxGuru = headers.indexOf('id_guru');
+    
+    if (idxId === -1 || idxTapel === -1 || idxKelas === -1 || idxMapel === -1 || idxGuru === -1) {
+      sheet.getRange(1, 1, 1, 5).setValues([['id_jadwal', 'id_tapel', 'id_kelas', 'id_mapel', 'id_guru']]);
+      headers = ['id_jadwal', 'id_tapel', 'id_kelas', 'id_mapel', 'id_guru'];
+      idxId = 0; idxTapel = 1; idxKelas = 2; idxMapel = 3; idxGuru = 4;
+    }
+    
+    for (let i = allData.length - 1; i > 0; i--) {
+      if (allData[i][idxTapel].toString().trim() === id_tapel.toString().trim() && 
+          allData[i][idxKelas].toString().trim() === id_kelas.toString().trim()) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+    if (arr_jadwal && arr_jadwal.length > 0) {
+      let newRows = [];
+      arr_jadwal.forEach(item => {
+        if(item.id_guru) { 
+          let row = new Array(headers.length).fill("");
+          row[idxId] = Utilities.getUuid();
+          row[idxTapel] = id_tapel;
+          row[idxKelas] = id_kelas;
+          row[idxMapel] = item.id_mapel;
+          row[idxGuru] = item.id_guru;
+          newRows.push(row);
+        }
+      });
+      if(newRows.length > 0) {
+        sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, headers.length).setValues(newRows);
+      }
+    }
+    
+    return { status: "success", message: "Jadwal guru berhasil disimpan!" };
+  } catch(e) { return { status: "error", message: e.toString() }; }
+}
+
+// FUNGSI BARU: REKAP JADWAL GURU & DETEKSI MAPEL KOSONG
+function getRekapJadwal(id_tapel) {
+  try {
+    // 1. Dapatkan referensi Mapel Aktif
+    const sheetMapel = DB.getSheet('mst_mapel');
+    const dataMapel = sheetMapel.getDataRange().getDisplayValues();
+    const headM = dataMapel[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+    let mapelAktif = {};
+    for(let i=1; i<dataMapel.length; i++) {
+      if((dataMapel[i][headM.indexOf('deleted_at')] === "" || !dataMapel[i][headM.indexOf('deleted_at')]) && (dataMapel[i][headM.indexOf('is_active')] === 'TRUE' || dataMapel[i][headM.indexOf('is_active')] === true)) {
+        mapelAktif[dataMapel[i][headM.indexOf('id_mapel')]] = dataMapel[i][headM.indexOf('nama_mapel')];
+      }
+    }
+    // 2. Dapatkan referensi Guru Aktif
+    const sheetGuru = DB.getSheet('mst_guru');
+    const dataGuru = sheetGuru.getDataRange().getDisplayValues();
+    const headG = dataGuru[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+    let guruAktif = {};
+    for(let i=1; i<dataGuru.length; i++) {
+      if((dataGuru[i][headG.indexOf('deleted_at')] === "" || !dataGuru[i][headG.indexOf('deleted_at')]) && (dataGuru[i][headG.indexOf('is_active')] === 'TRUE' || dataGuru[i][headG.indexOf('is_active')] === true)) {
+        guruAktif[dataGuru[i][headG.indexOf('id_guru')]] = dataGuru[i][headG.indexOf('nama_lengkap')];
+      }
+    }
+    // 3. Dapatkan referensi Kelas Aktif
+    const sheetKelas = DB.getSheet('mst_kelas');
+    const dataKelas = sheetKelas.getDataRange().getDisplayValues();
+    const headK = dataKelas[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+    let kelasAktif = {};
+    for(let i=1; i<dataKelas.length; i++) {
+      if((dataKelas[i][headK.indexOf('deleted_at')] === "" || !dataKelas[i][headK.indexOf('deleted_at')]) && (dataKelas[i][headK.indexOf('is_active')] === 'TRUE' || dataKelas[i][headK.indexOf('is_active')] === true)) {
+        kelasAktif[dataKelas[i][headK.indexOf('id_kelas')]] = dataKelas[i][headK.indexOf('nama_kelas')];
+      }
+    }
+    // 4. Baca Transaksi
+    const sheetTrx = DB.getSheet('trx_jadwal_mengajar');
+    let allTrx = sheetTrx.getDataRange().getDisplayValues();
+    if(allTrx.length === 0 || allTrx[0].length < 5) {
+      sheetTrx.getRange(1, 1, 1, 5).setValues([['id_jadwal', 'id_tapel', 'id_kelas', 'id_mapel', 'id_guru']]);
+      allTrx = sheetTrx.getDataRange().getDisplayValues();
+    }
+    const headT = allTrx[0].map(h => h.toString().toLowerCase().trim().replace(/\s+/g, '_'));
+    const idxTapel = headT.indexOf('id_tapel');
+    const idxKelas = headT.indexOf('id_kelas');
+    const idxMapel = headT.indexOf('id_mapel');
+    const idxGuru = headT.indexOf('id_guru');
+    
+    // Struktur Data
+    let rekapDict = {}; 
+    let mapelKosong = []; 
+    // Setup struktur awal (Semua mapel di semua kelas dianggap kosong dulu)
+    for(let idK in kelasAktif) {
+      rekapDict[idK] = {};
+      for(let idM in mapelAktif) {
+        rekapDict[idK][idM] = null;
+      }
+    }
+    // Isi dengan data yang ada di transaksi
+    if(idxTapel > -1) {
+      for(let i=1; i<allTrx.length; i++) {
+        if(allTrx[i][idxTapel].toString().trim() === id_tapel.toString().trim()) {
+          let idK = allTrx[i][idxKelas].toString().trim();
+          let idM = allTrx[i][idxMapel].toString().trim();
+          let idG = allTrx[i][idxGuru].toString().trim();
+          if(rekapDict[idK] && mapelAktif[idM]) {
+             rekapDict[idK][idM] = guruAktif[idG] || "[GURU NONAKTIF/DIHAPUS]";
+          }
+        }
+      }
+    }
+    // Format output
+    let rekapArray = [];
+    for(let idK in rekapDict) {
+      let listJadwal = [];
+      for(let idM in rekapDict[idK]) {
+        let namaGuru = rekapDict[idK][idM];
+        if(namaGuru) {
+          listJadwal.push({ mapel: mapelAktif[idM], guru: namaGuru });
+        } else {
+          mapelKosong.push({ kelas: kelasAktif[idK], mapel: mapelAktif[idM] });
+        }
+      }
+      listJadwal.sort((a,b) => a.mapel.localeCompare(b.mapel));
+      
+      rekapArray.push({
+        id_kelas: idK,
+        nama_kelas: kelasAktif[idK],
+        jadwal: listJadwal,
+        terisi: listJadwal.length,
+        totalMapel: Object.keys(mapelAktif).length
+      });
+    }
+    rekapArray.sort((a,b) => a.nama_kelas.localeCompare(b.nama_kelas));
+    mapelKosong.sort((a,b) => a.kelas.localeCompare(b.kelas));
+    return { status: 'success', rekapKelas: rekapArray, belumPlot: mapelKosong };
+  } catch(e) { return { status: 'error', message: e.toString() }; }
+}

@@ -1,0 +1,325 @@
+<!-- FILE: siswa.html -->
+<style>
+  .table-glass-blue { border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15); width: 100%; }
+  .table-glass-blue thead th { background: rgba(15, 23, 42, 0.85) !important; color: #f8fafc !important; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; border-bottom: 2px solid rgba(255,255,255,0.1); padding: 15px; }
+  .table-glass-blue tbody td { background: rgba(30, 41, 59, 0.6) !important; color: #f1f5f9 !important; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 15px; vertical-align: middle; }
+  .table-glass-blue tbody tr:hover td { background: rgba(51, 65, 85, 0.8) !important; color: #ffffff !important; transition: 0.2s; }
+  
+  .dataTables_wrapper .dataTables_filter input { background: rgba(255,255,255,0.9) !important; border-radius: 8px; border: none; padding: 6px 12px; color: #000; outline: none; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .dataTables_wrapper .dataTables_filter label { color: rgba(255,255,255,0.9) !important; font-weight: 500; }
+  .dataTables_length, .dataTables_info, .dataTables_paginate { display: none !important; }
+
+  .modal-glass-light { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); border-radius: 16px; color: #2c3e50; }
+  .modal-glass-light .form-control, .modal-glass-light .form-select { background: rgba(255, 255, 255, 0.8) !important; border: 1px solid rgba(0, 0, 0, 0.15) !important; color: #333 !important; font-weight: 500; }
+</style>
+
+<div class="row mb-3 align-items-center">
+  <div class="col-md-6 text-center text-md-start">
+    <h4 class="text-glass fw-bold mb-1">Master Data Siswa</h4>
+    <p class="text-glass" style="opacity: 0.85; font-size: 0.85rem;">Kelola data santri madrasah.</p>
+  </div>
+  <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+    <button class="btn btn-primary fw-bold shadow-sm rounded-pill px-4" onclick="window.bukaModalTambahSiswa()" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">
+      <i class="fa-solid fa-plus me-2"></i> Tambah Siswa
+    </button>
+  </div>
+</div>
+
+<div class="card glass-card p-3 p-md-4 mb-5" style="background: rgba(255,255,255,0.05); border: none;">
+  <div style="width: 100%;">
+    <table id="tabelSiswa" class="table table-glass-blue">
+      <thead>
+        <tr>
+          <th width="5%" class="text-center">No</th>
+          <th width="45%">Nama Lengkap</th>
+          <th width="15%" class="d-none d-md-table-cell text-center">NIS</th>
+          <th width="10%" class="d-none d-md-table-cell text-center">L/P</th>
+          <th width="15%" class="d-none d-md-table-cell text-center">Status</th>
+          <th width="10%" class="text-center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="data-siswa-body">
+        <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-info"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL FORM TAMBAH/EDIT SISWA -->
+<div class="modal fade" id="modalSiswa" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-dark" id="modalTitleSiswa">Tambah Siswa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.simpanDataSiswa();">
+        <div class="modal-body">
+          <input type="hidden" id="id_siswa">
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">NIS (Nomor Induk Siswa)</label>
+              <input type="text" class="form-control px-3 py-2" id="nis" required placeholder="Masukkan NIS">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Nama Lengkap</label>
+              <input type="text" class="form-control px-3 py-2" id="nama_lengkap_siswa" required placeholder="Nama Lengkap Siswa">
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Jenis Kelamin</label>
+              <select class="form-select px-3 py-2" id="jk_siswa" required>
+                <option value="">Pilih...</option>
+                <option value="L">Laki-laki (L)</option>
+                <option value="P">Perempuan (P)</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Tempat Lahir</label>
+              <input type="text" class="form-control px-3 py-2" id="tempat_lahir" placeholder="Kota/Kabupaten">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Tanggal Lahir</label>
+              <input type="date" class="form-control px-3 py-2" id="tgl_lahir">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Nama Orang Tua / Wali</label>
+              <input type="text" class="form-control px-3 py-2" id="nama_ortu" placeholder="Nama Ayah/Ibu">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Nomor HP Orang Tua</label>
+              <input type="number" class="form-control px-3 py-2" id="no_hp_ortu" placeholder="08...">
+            </div>
+          </div>
+
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="is_active_siswa" checked style="cursor: pointer;">
+            <label class="form-check-label ms-2 fw-medium text-dark" for="is_active_siswa" style="cursor: pointer;">Status Siswa Aktif</label>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-light border shadow-sm rounded-pill px-4 text-dark fw-medium" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary shadow-sm rounded-pill px-4 fw-bold" id="btnSimpanSiswa" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none;">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL SISWA -->
+<div class="modal fade" id="modalDetailSiswa" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-glass-light text-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25 py-3">
+        <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-user-graduate me-2 text-primary"></i>Detail Siswa</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" style="font-size: 0.75rem;"></button>
+      </div>
+      <div class="modal-body pb-2">
+        <table class="table table-borderless table-sm mb-0 text-dark" style="font-size: 0.95rem;">
+          <tr><td width="35%" class="text-secondary fw-semibold">NIS</td><td width="5%">:</td><td id="det-nis" class="fw-bold text-primary"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Nama</td><td>:</td><td id="det-nama-siswa" class="fw-bold"></td></tr>
+          <tr><td class="text-secondary fw-semibold">J. Kelamin</td><td>:</td><td id="det-jk-siswa"></td></tr>
+          <tr><td class="text-secondary fw-semibold">TTL</td><td>:</td><td id="det-ttl"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Nama Wali</td><td>:</td><td id="det-ortu"></td></tr>
+          <tr><td class="text-secondary fw-semibold">No. HP Wali</td><td>:</td><td id="det-hp-ortu"></td></tr>
+          <tr><td class="text-secondary fw-semibold">Status</td><td>:</td><td id="det-status-siswa"></td></tr>
+        </table>
+      </div>
+      <div class="modal-footer border-top border-secondary border-opacity-25 justify-content-between p-2">
+        <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm" onclick="window.editDariDetailSiswa()"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button type="button" class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="window.hapusDariDetailSiswa()"><i class="fa-solid fa-trash"></i> Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.globalSiswaData = []; 
+  window.selectedSiswaId = null;
+
+  // Fix layar Freeze Modal SPA
+  $('.modal-siswa-wrapper').remove(); 
+  const modalWrap = document.createElement('div');
+  modalWrap.className = 'modal-siswa-wrapper';
+  modalWrap.appendChild(document.getElementById('modalSiswa'));
+  modalWrap.appendChild(document.getElementById('modalDetailSiswa'));
+  document.body.appendChild(modalWrap);
+
+  window.loadTabelSiswa = function() {
+    document.getElementById('data-siswa-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-white-50"><div class="spinner-border text-info spinner-border-sm me-2"></div> Memuat data...</td></tr>';
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.status === "success") {
+          window.globalSiswaData = response.data;
+          window.renderTabelSiswa(window.globalSiswaData);
+        } else {
+          Swal.fire('Error DB', response.message, 'error');
+        }
+      })
+      .getSiswaList();
+  };
+
+  window.renderTabelSiswa = function(data) {
+    if ($.fn.DataTable.isDataTable('#tabelSiswa')) {
+      $('#tabelSiswa').DataTable().destroy();
+    }
+    
+    let html = '';
+    data.forEach((siswa, index) => {
+      let statusBadge = (siswa.is_active === true || siswa.is_active === "TRUE") 
+                        ? '<span class="badge bg-success shadow-sm rounded-pill px-3">Aktif</span>' 
+                        : '<span class="badge bg-danger shadow-sm rounded-pill px-3">Nonaktif</span>';
+      
+      html += `<tr>
+        <td class="text-center fw-medium">${index + 1}</td>
+        <td class="fw-bold">${siswa.nama_lengkap}</td>
+        <td class="text-center d-none d-md-table-cell" style="color: #94a3b8;">${siswa.nis}</td>
+        <td class="text-center d-none d-md-table-cell fw-medium">${siswa.jk}</td>
+        <td class="text-center d-none d-md-table-cell">${statusBadge}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-info shadow-none rounded-pill px-3 fw-medium" onclick="window.bukaDetailSiswa('${siswa.id_siswa}')">
+            <i class="fa-solid fa-eye"></i> Detail
+          </button>
+        </td>
+      </tr>`;
+    });
+
+    document.getElementById('data-siswa-body').innerHTML = html;
+    
+    $('#tabelSiswa').DataTable({
+      language: { 
+        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json',
+        emptyTable: "Belum ada data siswa. Silakan klik Tambah Siswa.",
+        search: "Cari Siswa:"
+      },
+      ordering: false, paging: false, info: false, lengthChange: false
+    });
+  };
+
+  window.bukaModalTambahSiswa = function() {
+    document.getElementById('id_siswa').value = '';
+    document.getElementById('nis').value = '';
+    document.getElementById('nama_lengkap_siswa').value = '';
+    document.getElementById('jk_siswa').value = '';
+    document.getElementById('tempat_lahir').value = '';
+    document.getElementById('tgl_lahir').value = '';
+    document.getElementById('nama_ortu').value = '';
+    document.getElementById('no_hp_ortu').value = '';
+    document.getElementById('modalTitleSiswa').innerText = 'Tambah Siswa Baru';
+    document.getElementById('is_active_siswa').checked = true;
+    new bootstrap.Modal(document.getElementById('modalSiswa')).show();
+  };
+
+  window.bukaDetailSiswa = function(id) {
+    const siswa = window.globalSiswaData.find(s => s.id_siswa === id);
+    if(siswa) {
+      window.selectedSiswaId = id;
+      
+      // Format Tanggal (Opsional, agar tampilan rapi)
+      let tanggal_lahir = siswa.tgl_lahir;
+      if (tanggal_lahir && tanggal_lahir.length > 10) tanggal_lahir = tanggal_lahir.substring(0, 10);
+
+      document.getElementById('det-nis').innerText = siswa.nis;
+      document.getElementById('det-nama-siswa').innerText = siswa.nama_lengkap;
+      document.getElementById('det-jk-siswa').innerText = siswa.jk === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)';
+      document.getElementById('det-ttl').innerText = `${siswa.tempat_lahir}, ${tanggal_lahir}`;
+      document.getElementById('det-ortu').innerText = siswa.nama_ortu;
+      document.getElementById('det-hp-ortu').innerText = siswa.no_hp || '-';
+      document.getElementById('det-status-siswa').innerHTML = (siswa.is_active === true || siswa.is_active === "TRUE") ? '<span class="badge bg-success shadow-sm rounded-pill px-2">Aktif</span>' : '<span class="badge bg-danger shadow-sm rounded-pill px-2">Nonaktif</span>';
+      
+      new bootstrap.Modal(document.getElementById('modalDetailSiswa')).show();
+    }
+  };
+
+  window.editDariDetailSiswa = function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalDetailSiswa')).hide();
+    setTimeout(() => {
+      const siswa = window.globalSiswaData.find(s => s.id_siswa === window.selectedSiswaId);
+      if(siswa) {
+        let tgl = siswa.tgl_lahir;
+        if(tgl && tgl.includes('T')) tgl = tgl.split('T')[0];
+
+        document.getElementById('id_siswa').value = siswa.id_siswa;
+        document.getElementById('nis').value = siswa.nis;
+        document.getElementById('nama_lengkap_siswa').value = siswa.nama_lengkap;
+        document.getElementById('jk_siswa').value = siswa.jk;
+        document.getElementById('tempat_lahir').value = siswa.tempat_lahir;
+        document.getElementById('tgl_lahir').value = tgl;
+        document.getElementById('nama_ortu').value = siswa.nama_ortu;
+        document.getElementById('no_hp_ortu').value = siswa.no_hp; // Mapping ke kolom no_hp di sheet
+        document.getElementById('is_active_siswa').checked = (siswa.is_active === true || siswa.is_active === "TRUE");
+        
+        document.getElementById('modalTitleSiswa').innerText = 'Edit Data Siswa';
+        new bootstrap.Modal(document.getElementById('modalSiswa')).show();
+      }
+    }, 400); 
+  };
+
+  window.hapusDariDetailSiswa = function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalDetailSiswa')).hide();
+    setTimeout(() => {
+      const siswa = window.globalSiswaData.find(s => s.id_siswa === window.selectedSiswaId);
+      window.hapusSiswa(window.selectedSiswaId, siswa.nama_lengkap);
+    }, 400);
+  };
+
+  window.simpanDataSiswa = function() {
+    const btn = document.getElementById('btnSimpanSiswa');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Proses...';
+    btn.disabled = true;
+
+    const dataObj = {
+      id_siswa: document.getElementById('id_siswa').value,
+      nis: document.getElementById('nis').value,
+      nama_lengkap: document.getElementById('nama_lengkap_siswa').value,
+      jk: document.getElementById('jk_siswa').value,
+      tempat_lahir: document.getElementById('tempat_lahir').value,
+      tgl_lahir: document.getElementById('tgl_lahir').value,
+      nama_ortu: document.getElementById('nama_ortu').value,
+      no_hp: document.getElementById('no_hp_ortu').value,
+      is_active: document.getElementById('is_active_siswa').checked
+    };
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.innerHTML = 'Simpan Data';
+        btn.disabled = false;
+        if(res.status === "success") {
+          bootstrap.Modal.getInstance(document.getElementById('modalSiswa')).hide();
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
+          window.loadTabelSiswa(); 
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      })
+      .saveSiswa(dataObj);
+  };
+
+  window.hapusSiswa = function(id, nama) {
+    Swal.fire({
+      title: 'Hapus Siswa?', text: `Yakin ingin menghapus ${nama}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Ya, Hapus!', background: 'rgba(255, 255, 255, 0.95)', color: '#333', backdrop: 'rgba(0,0,0,0.5)'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if(res.status === "success") {
+              Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+              window.loadTabelSiswa();
+            } else {
+              Swal.fire('Error', res.message, 'error');
+            }
+          })
+          .deleteSiswa(id);
+      }
+    });
+  };
+
+  window.loadTabelSiswa();
+</script>
